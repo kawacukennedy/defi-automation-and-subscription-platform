@@ -1,30 +1,34 @@
 const express = require('express');
-const http = require('http');
-const WebSocket = require('ws');
 const mongoose = require('mongoose');
-const redis = require('redis');
 const cors = require('cors');
-const helmet = require('helmet');
-const winston = require('winston');
-require('dotenv').config();
+const dotenv = require('dotenv');
+
+dotenv.config();
 
 const app = express();
-const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
 
 // Middleware
-app.use(helmet());
 app.use(cors());
 app.use(express.json());
 
-// Logger
-const logger = winston.createLogger({
-  level: 'info',
-  format: winston.format.json(),
-  transports: [
-    new winston.transports.File({ filename: 'error.log', level: 'error' }),
-    new winston.transports.File({ filename: 'combined.log' }),
-  ],
+// Routes
+app.use('/api/workflows', require('./routes/workflows'));
+app.use('/api/analytics', require('./routes/analytics'));
+app.use('/api/notifications', require('./routes/notifications'));
+app.use('/api/admin', require('./routes/admin'));
+app.use('/api/community', require('./routes/community'));
+
+// Connect to MongoDB
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/flowfi', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+.then(() => console.log('MongoDB connected'))
+.catch(err => console.error('MongoDB connection error:', err));
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
 
 if (process.env.NODE_ENV !== 'production') {
