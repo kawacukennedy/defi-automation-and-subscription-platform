@@ -1,0 +1,181 @@
+{
+  "project_name": "FlowFi - DeFi Automation & Subscription Platform",
+  "summary": "FlowFi is a fully decentralized Web3 platform on Flow that allows users to automate DeFi actions, recurring crypto payments, staking, swaps, NFT rewards, DAO governance, and community workflows using Forte Actions and Workflows. FlowFi combines automation, social gamification, analytics, NFT achievements, multi-wallet support, fiat onboarding, and operational monitoring into a single platform for creators, DAOs, and DeFi users.",
+  
+  "hackathon_info": {
+    "event": "Forte Hacks 2025",
+    "category": "Fresh Code",
+    "tracks": [
+      "DeFi Automation",
+      "Forte Workflow Integration",
+      "NFT & Token Utility",
+      "Social Web3",
+      "Analytics & Data Visualization",
+      "DAO & Governance",
+      "Subscription Services"
+    ],
+    "main_technologies": [
+      "Flow Blockchain",
+      "Forte Upgrade",
+      "Cadence Smart Contracts",
+      "React + TailwindCSS + Framer Motion + Next.js",
+      "Node.js + Express + WebSocket",
+      "MongoDB/Firebase + Redis Caching",
+      "QuickNode RPC + Flow JS SDK",
+      "IPFS/Flow Storage",
+      "Dune Analytics integration",
+      "CI/CD via GitHub Actions",
+      "Testing: Jest, Cypress, Cadence Tests"
+    ],
+    "partners_utilized": [
+      "QuickNode",
+      "Moonpay",
+      "Thirdweb",
+      "Privy",
+      "Crossmint",
+      "Dune Analytics"
+    ]
+  },
+
+  "core_features": [
+    {"name": "Automated Recurring Payments", "description": "Schedule recurring crypto payments (FLOW, USDC, or partner tokens) with Forte Actions. Supports retries, notifications, rollback, and error handling."},
+    {"name": "DeFi Workflow Automation", "description": "Create, fork, and deploy reusable workflows for staking, swapping, lending, compounding, NFT minting, cross-protocol actions, DAO votes, and subscription services."},
+    {"name": "Subscription Management Dashboard", "description": "Shows active workflows, execution history, next triggers, success/failure status, notifications, templates, analytics, and user achievements."},
+    {"name": "Smart Notifications", "description": "Multi-channel notifications via in-app, email, Telegram, Discord, or Webhooks for workflow executions, failures, retries, or system updates."},
+    {"name": "Social & Gamification Layer", "description": "Leaderboards, workflow sharing, NFT badges for milestones, trending templates, DAO/community voting, achievements, reputation scoring, and forkable workflows marketplace."},
+    {"name": "Analytics & Insights", "description": "Detailed token balances, workflow performance, success/failure rates, adoption metrics, trending actions, KPIs, charts, tables, CSV/JSON export, social sharing analytics."},
+    {"name": "Fiat Onboarding & Wallet Support", "description": "Onboard users via Moonpay, support multiple wallets (Dapper, Blocto, Lilico), optional multi-sig for DAOs and shared accounts, mobile wallet support."},
+    {"name": "Privacy & Security", "description": "Privy-encrypted off-chain data, workflow validation, rate limiting, multi-sig, rollback mechanisms, audit logging, monitoring, access controls, and threat mitigation."},
+    {"name": "Edge Case Handling & Error Recovery", "description": "Automatic retries, insufficient balance alerts, fallback flows, notifications for failures, logging for audits, manual overrides by user/admin."},
+    {"name": "Accessibility & Internationalization", "description": "ARIA compliance, screen reader support, keyboard navigation, high contrast mode, multiple languages (EN, FR, ES, ZH, AR), mobile-first responsive design."},
+    {"name": "Operational Monitoring & Admin Panel", "description": "Real-time dashboards, workflow execution monitoring, error alerts, admin overrides, performance metrics, user support and dispute management."}
+  ],
+
+  "ui_specifications": {
+    "design_style": "Futuristic minimalism with Flow green/blue gradients, glassmorphism cards, subtle neon hover effects, particle backgrounds, fluid transitions, micro-interactions, dark/light mode, responsive layout for desktop, tablet, mobile, and foldable devices.",
+    "framework": "React + TailwindCSS + Framer Motion + Next.js",
+    "responsive_design": "Mobile-first, breakpoint-based adjustments, skeleton loaders, adaptive animations, optimized for high-DPI devices",
+    "animations": "Hover effects, modals, particle motion, workflow execution, NFT minting, leaderboard interactions, CTA pulsing, step-by-step onboarding animations, skeleton loaders for slow connections",
+    "core_pages": [
+      {"page": "Landing", "components": ["Hero section with tagline & CTA", "Feature overview cards", "Animated workflow illustrations", "Demo video embed", "Wallet connect modal", "Scroll-triggered animations", "Testimonials section", "Press/media logos"]},
+      {"page": "Dashboard", "components": ["Top nav with user info & notifications", "Sidebar (Workflows, Templates, Analytics, Community, Settings, DAO, Admin)", "Active workflows with status and triggers", "Stats panel", "Recent activity log", "CTA 'Create Workflow'", "Error & success messages", "Skeleton loaders for slow connections"]},
+      {"page": "Create Workflow", "components": ["Action selector (stake, swap, send, mint NFT, DAO vote, subscription)", "Token selector", "Amount input", "Frequency & schedule input", "Trigger configuration modal", "Preview workflow modal", "Deploy button", "Validation & error messages", "Tutorial tooltip overlay"]},
+      {"page": "Workflow Detail", "components": ["Execution logs", "Next trigger countdown", "Explorer links", "Pause/Edit/Cancel buttons", "Share workflow template button", "NFT badge status", "Multi-sig approval status", "Fork button"]},
+      {"page": "Community Hub", "components": ["Trending workflow templates", "Search & filter by action/token/frequency", "Fork/Import workflow", "Voting system", "Leaderboard of contributors", "Social sharing CTA", "Template comments & ratings"]},
+      {"page": "Analytics", "components": ["Charts: token balances, execution success/failure, adoption trends", "Tables for metrics", "Filters by date/token/action", "Export CSV/JSON", "Predictive analytics module"]},
+      {"page": "Settings", "components": ["Wallet management", "Notification preferences", "Theme toggle", "Security & privacy settings", "API keys & integrations", "Language selection", "Multi-sig settings"]},
+      {"page": "Admin Panel", "components": ["Real-time workflow monitoring", "Error and retry dashboards", "User dispute management", "Analytics overview", "Feature toggles", "Deployment & upgrade controls"]}
+    ]
+  },
+
+  "ux_flows": [
+    {"name": "Onboarding", "steps": ["Visit landing page", "Connect wallet", "Optional fiat onboarding", "Walkthrough modal", "Create first workflow or explore community templates", "Tutorial prompts for first actions", "Gamified achievements"]},
+    {"name": "Create Workflow", "steps": ["Click 'Create Workflow'", "Select action type", "Select token & amount", "Configure schedule & Forte trigger", "Preview workflow", "Sign transaction via wallet", "Deploy workflow", "Update dashboard & achievement badges"]},
+    {"name": "Execution & Monitoring", "steps": ["Forte triggers fire", "Smart contract executes action", "Dashboard logs updated", "Notifications sent", "Retry or rollback if failure occurs", "Admin alert for critical errors"]},
+    {"name": "Share & Fork Workflow", "steps": ["Open workflow detail", "Click 'Share Template'", "Store metadata on IPFS/Flow", "Other users import & deploy workflow", "Leaderboard & NFT achievement update"]},
+    {"name": "Analytics & Reporting", "steps": ["Open analytics dashboard", "Fetch blockchain & off-chain metrics", "Render charts/tables", "Apply filters (date, token, action)", "Export CSV/JSON", "Share insights via social platforms"]},
+    {"name": "DAO & Governance Flow", "steps": ["Propose workflow template adoption", "Multi-sig approval required", "Voting & execution", "Distribute rewards or tokens", "Update reputation & leaderboard metrics"]}
+  ],
+
+  "smart_contract_design": {
+    "language": "Cadence",
+    "architecture": [
+      {"name": "FlowFiWorkflowContract", "features": ["Create/Edit/Pause/Cancel workflows", "Track user, token, action, schedule, metadata", "Trigger execution via Forte Actions", "Emit events (creation, execution, failure)", "Multi-token support", "NFT reward minting", "Composable workflows", "Upgradeable patterns", "Edge case handling", "Testing hooks"]},
+      {"name": "FlowFiSubscriptionManager", "features": ["Recurring payments/subscriptions", "FungibleToken integration", "Fee deduction & validation", "Execution history tracking", "Composable workflows", "Retry & rollback for failed payments"]},
+      {"name": "FlowFiNFTRewards", "features": ["Mint achievement badges", "Store metadata on IPFS/Flow", "Thirdweb/Crossmint integration", "Leaderboard integration", "Gamified NFT rewards", "Forkable badge templates"]},
+      {"name": "FlowFiDAOManager", "features": ["Multi-user workflow approval", "Shared multi-sig control", "Voting on templates", "Reward distribution", "Governance events", "Reputation scoring", "Forkable DAO workflows"]}
+    ]
+  },
+
+  "backend_and_integration": {
+    "server": "Node.js + Express + WebSocket",
+    "functions": ["Monitor blockchain events", "Send notifications (in-app/email/Telegram/Webhook)", "Fetch analytics data", "Off-chain metadata & leaderboard storage", "Serve frontend APIs", "Job queues for retries", "Webhooks for integrations", "Cron jobs for scheduled workflows", "Error handling & alerts", "Admin tools for monitoring & rollback"],
+    "database": "MongoDB/Firebase",
+    "cache": "Redis for real-time workflow status",
+    "logging": "Winston with structured logs, central aggregation",
+    "monitoring": "Prometheus + Grafana dashboards for workflow executions, backend performance, blockchain metrics"
+  },
+
+  "web3_integration": {
+    "wallets_supported": ["Dapper", "Blocto", "Lilico", "Ledger", "Metamask (EVM bridging)"],
+    "provider": "Flow JS SDK + QuickNode RPC",
+    "offchain_services": ["Moonpay", "Privy", "Crossmint", "Thirdweb", "Dune Analytics"],
+    "security_features": ["Privy encryption", "Multi-sig support", "Workflow validation", "Retry & rollback", "Rate limiting", "Replay attack prevention", "Front-running mitigation"]
+  },
+
+  "deployment": {
+    "frontend_hosting": "Vercel/Netlify",
+    "backend_hosting": "Render/Railway/Fly.io",
+    "blockchain_network": "Flow Testnet -> Mainnet",
+    "CI_CD": ["GitHub Actions for build/test/deploy", "Unit/integration/e2e tests", "Contract deployment scripts", "Linting, formatting, security checks"],
+    "environment_variables": ["FLOW_ACCESS_NODE", "MONGODB_URI", "QUICKNODE_API_KEY", "TELEGRAM_BOT_TOKEN", "MOONPAY_API_KEY", "PRIVY_API_KEY", "THIRDWEB_API_KEY"]
+  },
+
+  "security": {
+    "wallet_authentication": "Web3 wallet login only",
+    "multi_sig_support": "Optional for DAOs/shared workflows",
+    "data_encryption": "Privy for off-chain data",
+    "workflow_validation": "Check triggers, balances, permissions, template authenticity",
+    "rate_limiting": "Backend API rate limiting",
+    "rollback": "Failed workflows retried or reverted",
+    "threat_model": ["Unauthorized execution", "Insufficient balance", "Replay attacks", "Front-running", "Malicious templates", "Phishing attacks", "DoS attacks"]
+  },
+
+  "testing": {
+    "unit_tests": "Cadence contract tests",
+    "integration_tests": "Workflow creation/execution/dashboard",
+    "e2e_tests": "Full journey onboarding -> workflow -> execution -> analytics -> social sharing",
+    "security_tests": "Unauthorized access, multi-sig tests, workflow rollback, token mismanagement",
+    "load_tests": "Simulate hundreds of concurrent workflows and triggers",
+    "cross_browser_tests": "Chrome, Firefox, Safari, Edge, mobile Safari, Android Chrome",
+    "accessibility_tests": "Screen reader, keyboard navigation, color contrast"
+  },
+
+  "analytics": {
+    "metrics": ["Total workflows created", "Active workflows", "Execution success/failure", "Token volume processed", "Top actions/templates", "User engagement", "Adoption/retention rates", "Leaderboard rankings", "Template popularity"],
+    "display": "Charts/tables using Recharts/D3.js, CSV/JSON export, predictive analytics, AI-based optimization suggestions"
+  },
+
+  "gamification": {
+    "NFT_badges": ["Workflow milestones", "Monthly streaks", "DAO contribution badges", "Forked workflow badges"],
+    "leaderboard": ["Top workflow creators", "Top contributors", "Most forked templates", "DAO contributors", "Template adoption rankings"],
+    "achievements": ["Completion streaks", "High-value workflows", "Early adopters", "Community recognition"]
+  },
+
+  "hackathon_submission": {
+    "required_files": ["README.md", "Video Demo 90s", "Public GitHub repo", "Social Post #ForteHacks @flow_blockchain", "Deployed contract links", "Testnet/Mainnet flag"],
+    "submission_type_flags": ["Fresh Code", "Existing Code integration optional"],
+    "judging_alignment": {
+      "Technology": "Forte Actions/Workflows integration, multi-token, NFT rewards, DAO governance",
+      "Completion": "End-to-end working MVP with dashboard, notifications, analytics, execution",
+      "Originality": "First DeFi subscription & workflow automation platform on Flow with NFT & DAO integration",
+      "UX": "Intuitive workflow creation, responsive, dashboard analytics, gamified onboarding",
+      "Adoption": "High real-world applicability, shareable workflows, DAO & community adoption",
+      "ProtocolUsage": "Native Flow/Forte integration, composable workflows, scalable architecture"
+    }
+  },
+
+  "stretch_goals": [
+    "Multi-user DAOs sharing workflows",
+    "AI assistant suggesting optimal DeFi strategies",
+    "Predictive analytics on workflow efficiency",
+    "NFT-gated premium automation templates",
+    "Cross-chain integrations (EVM bridging)",
+    "Community voting & curation dashboard",
+    "On-chain leaderboard & reputation system",
+    "Advanced retry/failover mechanisms",
+    "Full localization (EN, FR, ES, ZH, AR)",
+    "Mobile app version (React Native)",
+    "Voice-based workflow control",
+    "Integration with layer-2 scaling solutions",
+    "Dynamic gas optimization for batched triggers",
+    "Marketplace for premium workflow templates"
+  ],
+
+  "scalability": {
+    "frontend": "Code splitting, lazy loading, caching, CDN, optimized bundle size",
+    "backend": "Horizontal scaling, Redis caching, distributed job queues, containerization (Docker/Kubernetes)",
+    "blockchain": "Optimized on-chain storage, batched transactions, Forte Action efficiency, multi-trigger batching",
+    "community": "IPFS template metadata, distributed leaderboard caching, multi-region availability"
+  }
+}
