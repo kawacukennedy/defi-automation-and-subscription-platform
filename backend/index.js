@@ -62,14 +62,17 @@ wss.on('connection', (ws) => {
 });
 
 // Routes
+const workflowRoutes = require('./routes/workflows');
+const analyticsRoutes = require('./routes/analytics');
+const notificationRoutes = require('./routes/notifications');
+
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
-app.get('/api/workflows', async (req, res) => {
-  // Placeholder for workflow routes
-  res.json({ workflows: [] });
-});
+app.use('/api/workflows', workflowRoutes);
+app.use('/api/analytics', analyticsRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Start server
 const PORT = process.env.PORT || 3001;
