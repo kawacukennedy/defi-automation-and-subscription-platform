@@ -1,6 +1,10 @@
+"use client";
+
 import Link from "next/link";
+import { useWallet } from "@/lib/WalletContext";
 
 export default function Home() {
+  const { connected, connectWallet } = useWallet();
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800">
       {/* Hero Section */}
@@ -12,9 +16,18 @@ export default function Home() {
           Schedule recurring crypto payments, automate staking, swaps, and NFT rewards on Flow blockchain using Forte Actions and Workflows.
         </p>
         <div className="flex gap-4 justify-center">
-          <Link href="/dashboard" className="bg-green-600 text-white px-8 py-3 rounded-lg hover:bg-green-700 transition">
-            Get Started
-          </Link>
+          {connected ? (
+            <Link href="/dashboard" className="bg-green-600 text-white px-8 py-3 rounded-lg hover:bg-green-700 transition">
+              Go to Dashboard
+            </Link>
+          ) : (
+            <button
+              onClick={connectWallet}
+              className="bg-green-600 text-white px-8 py-3 rounded-lg hover:bg-green-700 transition"
+            >
+              Connect Wallet
+            </button>
+          )}
           <button className="border border-gray-300 px-8 py-3 rounded-lg hover:bg-gray-50 transition">
             Watch Demo
           </button>
@@ -44,9 +57,18 @@ export default function Home() {
       <section className="bg-green-600 text-white py-20 text-center">
         <h2 className="text-3xl font-bold mb-4">Ready to Automate?</h2>
         <p className="mb-8">Connect your wallet and start building workflows today.</p>
-        <button className="bg-white text-green-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition">
-          Connect Wallet
-        </button>
+        {connected ? (
+          <Link href="/dashboard" className="bg-white text-green-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition inline-block">
+            Go to Dashboard
+          </Link>
+        ) : (
+          <button
+            onClick={connectWallet}
+            className="bg-white text-green-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition"
+          >
+            Connect Wallet
+          </button>
+        )}
       </section>
     </div>
   );
