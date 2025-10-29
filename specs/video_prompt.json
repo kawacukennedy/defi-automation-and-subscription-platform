@@ -1,0 +1,141 @@
+{
+  "video_prompt": {
+    "title": "AgriTech DApp 10-Second Pitch Video",
+    "duration": 10,
+    "app_name": "AgriTech",
+    "style": {
+      "visual_theme": "Futuristic African agri-tech ecosystem, minimalist UI, vibrant earth tones (green, gold, brown) with neon accents, high-tech holographic overlays, glowing particle effects",
+      "animation_style": "Smooth cinematic transitions, dynamic fly-throughs, 3D isometric animations, kinetic typography, particle streams representing blockchain data and tokens",
+      "camera": "Dynamic fly-through over Africa, smooth zoom-ins on modules, rotating 3D elements, parallax depth for immersive effect",
+      "no_humans": true,
+      "voiceover": {
+        "gender": "male",
+        "tone": "inspirational, confident, clear, neutral accent",
+        "language": "English",
+        "script": [
+          {
+            "time_range": "0-1s",
+            "text": "Introducing AgriTech, Africa's first AI and Blockchain-powered agricultural finance platform."
+          },
+          {
+            "time_range": "1-3s",
+            "text": "Connecting millions of farmers, cooperatives, and investors across the continent seamlessly."
+          },
+          {
+            "time_range": "3-4s",
+            "text": "Secure decentralized digital identities powered by AI-KYC and zero-knowledge privacy proofs."
+          },
+          {
+            "time_range": "4-5s",
+            "text": "Smart AI credit scoring for transparent trust, liquidity, and risk evaluation."
+          },
+          {
+            "time_range": "5-6s",
+            "text": "Instant microloans via automated smart contracts and pooled liquidity."
+          },
+          {
+            "time_range": "6-7s",
+            "text": "Tokenized marketplace and supply chain tracking ensure efficient farm-to-market operations."
+          },
+          {
+            "time_range": "7-8s",
+            "text": "Verified carbon credits reward climate-smart farming and offset CO2 emissions."
+          },
+          {
+            "time_range": "8-9s",
+            "text": "IoT and satellite data feed real-time insights securely into the blockchain."
+          },
+          {
+            "time_range": "9-10s",
+            "text": "AgriTech: Empowering African farmers with AI, Blockchain, and climate-smart finance."
+          }
+        ]
+      }
+    },
+    "scene_sequence": [
+      {
+        "time_range": "0-1s",
+        "visuals": "AgriTech logo animation with neon outlines and particle trails representing blockchain nodes; subtle 3D rotation with glowing edges",
+        "text_overlay": "AgriTech DApp – AI + Blockchain for African Agriculture"
+      },
+      {
+        "time_range": "1-3s",
+        "visuals": "3D animated map of Africa showing glowing lines connecting farmers, cooperatives, and investors; floating AI icons representing analytics; particle streams flow along network connections",
+        "text_overlay": "Connecting farmers, cooperatives, and investors"
+      },
+      {
+        "time_range": "3-4s",
+        "visuals": "DID identity module holograms: digital ID cards appear above farms, zero-knowledge proof shields animate, AI verification pulses; animated reputation scores rising",
+        "text_overlay": "Decentralized digital identities with AI-KYC"
+      },
+      {
+        "time_range": "4-5s",
+        "visuals": "AI credit scoring engine: 3D bar charts dynamically rise showing Trust, Liquidity, Risk; animated SHAP/LIME explainer bars appear; glowing AI spark effects",
+        "text_overlay": "Transparent AI credit scoring"
+      },
+      {
+        "time_range": "5-6s",
+        "visuals": "Lending protocol: animated microloan coins flow from investors to farms via glowing smart contract nodes; repayment streams and late-fee triggers shown with dynamic particle lines; optional insurance shield icons appear",
+        "text_overlay": "Instant microloans through smart contracts"
+      },
+      {
+        "time_range": "6-7s",
+        "visuals": "Marketplace module: 3D farm fields with tokenized crops floating above plots; AI pricing recommendation sparks; escrow contract locks animate; IoT sensor beams verifying produce shipments",
+        "text_overlay": "Tokenized marketplace & supply chain tracking"
+      },
+      {
+        "time_range": "7-8s",
+        "visuals": "Carbon credit module: animated satellite images with NDVI heatmaps, crop rotation patterns tracked; CO2 absorption visualized as flowing green energy; CARBT tokens spin and glow in 3D",
+        "text_overlay": "Verified carbon credits & climate impact"
+      },
+      {
+        "time_range": "8-9s",
+        "visuals": "IoT and data layer: drones, LoRa sensors, and weather stations emit glowing streams of data to blockchain oracles; AI anomaly detection pulses on abnormal patterns; edge processing nodes animate",
+        "text_overlay": "Real-time secure IoT and satellite data feeds"
+      },
+      {
+        "time_range": "9-10s",
+        "visuals": "Final wrap-up: all modules connected in glowing network mesh; UI dashboards animate showing credit, yield, and carbon impact; token flows circulate; fade into AgriTech logo with particle spark explosion",
+        "text_overlay": "AgriTech: Empowering African farmers with AI + Blockchain"
+      }
+    ],
+    "motion_effects": {
+      "transitions": "Smooth 3D zooms, parallax fly-throughs, rotating modules, particle trails, holographic glows, fade-in/out of text",
+      "data_visuals": "Animated charts, dynamic token flows, AI spark effects, SHAP/LIME explainer bars, IoT beams, NDVI heatmaps",
+      "text_animation": "Kinetic typography with smooth entrance/exit, color-coded highlights, subtle 3D rotation"
+    },
+    "color_palette": {
+      "primary": "#4CAF50",
+      "secondary": "#FFC107",
+      "accent": "#1E88E5",
+      "background": "#F9F9F9",
+      "particle_glow": "#00FFAA"
+    },
+    "audio": {
+      "music": "Inspirational electronic ambient track with subtle African percussion and nature sounds",
+      "sound_effects": [
+        "Blockchain transaction pings",
+        "Coin flow animations",
+        "AI spark zaps",
+        "IoT sensor beeps",
+        "Satellite ping swooshes",
+        "CARBT token spin chimes"
+      ]
+    },
+    "export_settings": {
+      "resolution": "1920x1080",
+      "frame_rate": 60,
+      "format": "MP4",
+      "compression": "High-quality H.264",
+      "subtitles": "Full subtitles matching all text overlays and voiceover script"
+    },
+    "special_instructions": [
+      "No humans in any scene",
+      "Emphasize AI + Blockchain + IoT synergy",
+      "Highlight all modules: DID, AI Credit, Lending, Marketplace, Carbon, Data",
+      "Smooth cinematic motion, particle effects, holographic visuals",
+      "Voiceover must match scene timing exactly",
+      "Maintain African-inspired color palette and futuristic aesthetic"
+    ]
+  }
+}
