@@ -69,6 +69,8 @@ wss.on('connection', (ws) => {
 const workflowRoutes = require('./routes/workflows');
 const analyticsRoutes = require('./routes/analytics');
 const notificationRoutes = require('./routes/notifications');
+const adminRoutes = require('./routes/admin');
+const communityRoutes = require('./routes/community');
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
@@ -77,6 +79,8 @@ app.get('/api/health', (req, res) => {
 app.use('/api/workflows', workflowRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/community', communityRoutes);
 
 // Start server
 const PORT = process.env.PORT || 3001;
