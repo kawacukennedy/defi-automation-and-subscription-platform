@@ -85,10 +85,21 @@ export default function Dashboard() {
       <header className="bg-white dark:bg-gray-800 shadow">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold">FlowFi Dashboard</h1>
-          <div className="flex items-center gap-4">
-            <span>Notifications</span>
-            <span>Wallet: {user ? 'Connected' : 'Disconnected'}</span>
-          </div>
+          <nav className="flex items-center gap-6">
+            <Link href="/dashboard" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white">
+              Dashboard
+            </Link>
+            <Link href="/create-workflow" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white">
+              Create Workflow
+            </Link>
+            <Link href="/analytics" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white">
+              Analytics
+            </Link>
+            <Link href="/leaderboard" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white">
+              Leaderboard
+            </Link>
+            <span className="text-gray-600 dark:text-gray-300">Wallet: {user ? 'Connected' : 'Disconnected'}</span>
+          </nav>
         </div>
       </header>
 
