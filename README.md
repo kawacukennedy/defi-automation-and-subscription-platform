@@ -64,15 +64,59 @@ cd ../frontend
 npm run dev
 ```
 
+## Deployment to Vercel
+
+### Frontend Deployment
+
+1. Connect your GitHub repository to Vercel
+2. Set the root directory to `frontend/`
+3. Add environment variables in Vercel dashboard:
+   - `NEXT_PUBLIC_FLOW_ACCESS_NODE`
+   - `NEXT_PUBLIC_FLOW_WALLET_DISCOVERY`
+
+### Backend Deployment
+
+1. Create a new Vercel project for the backend
+2. Set the root directory to `backend/`
+3. Add environment variables:
+   - `MONGODB_URI`
+   - `REDIS_URL`
+   - `FLOW_ACCESS_NODE`
+   - `QUICKNODE_API_KEY`
+   - `TELEGRAM_BOT_TOKEN`
+   - `MOONPAY_API_KEY`
+   - `PRIVY_API_KEY`
+   - `THIRDWEB_API_KEY`
+
+### Smart Contracts
+
+Deploy contracts to Flow Testnet/Mainnet using Flow CLI:
+
+```bash
+flow project deploy --network testnet
+```
+
 ## Project Structure
 
 ```
-├── frontend/          # Next.js frontend
-├── backend/           # Node.js backend
+├── frontend/          # Next.js frontend with futuristic UI
+├── backend/           # Node.js backend with monitoring & admin
 ├── contracts/         # Cadence smart contracts
-├── README.md
-└── ...
+├── specs/             # App specifications and architecture
+├── vercel.json        # Vercel deployment configuration
+├── .env.example       # Environment variables template
+└── README.md
 ```
+
+## API Endpoints
+
+- `GET /api/workflows` - Get user workflows
+- `POST /api/workflows` - Create new workflow
+- `GET /api/analytics/user` - Get user analytics
+- `GET /api/community/templates/trending` - Get trending templates
+- `POST /api/community/templates/:id/fork` - Fork a template
+- `GET /api/admin/workflows` - Admin: Get all workflows
+- `POST /api/admin/workflows/:id/retry` - Admin: Retry workflow
 
 ## Contributing
 
