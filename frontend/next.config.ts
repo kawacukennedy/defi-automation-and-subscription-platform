@@ -1,9 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Disable Turbopack to use Webpack
-  turbopack: false,
-
   // Enable experimental features for better performance
   experimental: {
     optimizeCss: true,
