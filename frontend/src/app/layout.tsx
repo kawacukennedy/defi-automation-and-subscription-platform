@@ -5,9 +5,25 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { WalletProvider } from "@/lib/WalletContext";
 import Link from "next/link";
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { useState, useEffect, Suspense } from "react";
+import dynamic from 'next/dynamic';
 import ErrorBoundary from "@/components/ErrorBoundary";
+
+// Lazy load heavy components
+const MotionDiv = dynamic(() => import('framer-motion').then(mod => ({ default: mod.motion.div })), {
+  ssr: false,
+  loading: () => <div className="animate-pulse bg-gray-200 rounded h-4 w-20"></div>
+});
+
+const MotionNav = dynamic(() => import('framer-motion').then(mod => ({ default: mod.motion.nav })), {
+  ssr: false,
+  loading: () => <nav className="p-4 bg-gray-100">Loading navigation...</nav>
+});
+
+const MotionFooter = dynamic(() => import('framer-motion').then(mod => ({ default: mod.motion.footer })), {
+  ssr: false,
+  loading: () => <footer className="py-12 bg-gray-100">Loading footer...</footer>
+});
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -22,6 +38,57 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "FlowFi - DeFi Automation & Subscription Platform",
   description: "Automate DeFi actions, recurring crypto payments, staking, swaps, NFT rewards, DAO governance on Flow blockchain",
+  keywords: ["DeFi", "Flow", "Blockchain", "Automation", "Crypto", "NFT", "DAO", "Web3"],
+  authors: [{ name: "FlowFi Team" }],
+  creator: "FlowFi",
+  publisher: "FlowFi",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  metadataBase: new URL('https://flowfi.vercel.app'),
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    title: "FlowFi - DeFi Automation Platform",
+    description: "Automate your DeFi workflows on Flow blockchain with AI-powered insights",
+    url: 'https://flowfi.vercel.app',
+    siteName: 'FlowFi',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'FlowFi - DeFi Automation Platform',
+      },
+    ],
+    locale: 'en_US',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: "FlowFi - DeFi Automation Platform",
+    description: "Automate your DeFi workflows on Flow blockchain",
+    images: ['/og-image.png'],
+    creator: '@flowfi',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  verification: {
+    google: 'your-google-site-verification',
+  },
+  category: 'finance',
 };
 
 export default function RootLayout({
@@ -55,6 +122,39 @@ export default function RootLayout({
 
   return (
     <html lang="en" className={darkMode ? 'dark' : ''}>
+      <head>
+        {/* PWA Meta Tags */}
+        <meta name="application-name" content="FlowFi" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="FlowFi" />
+        <meta name="description" content="Automate DeFi actions, recurring crypto payments, staking, swaps, NFT rewards, DAO governance on Flow blockchain" />
+        <meta name="format-detection" content="telephone=no" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="msapplication-config" content="/browserconfig.xml" />
+        <meta name="msapplication-TileColor" content="#00ef8b" />
+        <meta name="msapplication-tap-highlight" content="no" />
+        <meta name="theme-color" content="#00ef8b" />
+
+        {/* Apple Touch Icons */}
+        <link rel="apple-touch-icon" href="/icon-192x192.png" />
+        <link rel="apple-touch-icon" sizes="152x152" href="/icon-192x192.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/icon-192x192.png" />
+        <link rel="apple-touch-icon" sizes="167x167" href="/icon-192x192.png" />
+
+        {/* Favicon */}
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+        <link rel="manifest" href="/manifest.json" />
+        <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#00ef8b" />
+        <link rel="shortcut icon" href="/favicon.ico" />
+
+        {/* Preconnect to external domains for performance */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://access-testnet.onflow.org" />
+        <link rel="dns-prefetch" href="//access-testnet.onflow.org" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased transition-colors duration-300 ${
           darkMode ? 'bg-gradient-to-br from-blue-900 via-purple-900 to-green-900 text-white' : 'bg-gradient-to-br from-green-50 to-blue-50 text-gray-900'
@@ -62,14 +162,15 @@ export default function RootLayout({
       >
         <WalletProvider>
           {/* Navigation */}
-          <motion.nav
-            initial={{ y: -50, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.5 }}
-            className={`backdrop-blur-md border-b ${
-              darkMode ? 'bg-black/20 border-white/10' : 'bg-white/20 border-gray-200'
-            } p-4 sticky top-0 z-50`}
-          >
+          <Suspense fallback={<nav className="p-4 bg-gray-100 animate-pulse">Loading navigation...</nav>}>
+            <MotionNav
+              initial={{ y: -50, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.5 }}
+              className={`backdrop-blur-md border-b ${
+                darkMode ? 'bg-black/20 border-white/10' : 'bg-white/20 border-gray-200'
+              } p-4 sticky top-0 z-50`}
+            >
             <div className="container mx-auto flex justify-between items-center">
               <Link href="/" className="text-2xl font-bold bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
                 FlowFi
@@ -158,7 +259,8 @@ export default function RootLayout({
                 </div>
               </div>
             </div>
-          </motion.nav>
+            </MotionNav>
+          </Suspense>
 
           {/* Main Content */}
           <main className="min-h-screen">
@@ -168,14 +270,15 @@ export default function RootLayout({
           </main>
 
           {/* Footer */}
-          <motion.footer
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className={`backdrop-blur-md border-t ${
-              darkMode ? 'bg-black/20 border-white/10' : 'bg-white/20 border-gray-200'
-            } py-12`}
-          >
+          <Suspense fallback={<footer className="py-12 bg-gray-100 animate-pulse">Loading footer...</footer>}>
+            <MotionFooter
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className={`backdrop-blur-md border-t ${
+                darkMode ? 'bg-black/20 border-white/10' : 'bg-white/20 border-gray-200'
+              } py-12`}
+            >
             <div className="container mx-auto px-4">
               <div className="grid md:grid-cols-4 gap-8">
                 <div>
@@ -221,9 +324,48 @@ export default function RootLayout({
                 <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                   © 2025 FlowFi. All rights reserved. | Powered by Flow Blockchain & Forte
                 </p>
-              </div>
-            </div>
-          </motion.footer>
+          </div>
+        </div>
+            </MotionFooter>
+          </Suspense>
+
+      {/* Service Worker Registration */}
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `
+            if ('serviceWorker' in navigator) {
+              window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/sw.js')
+                  .then(function(registration) {
+                    console.log('SW registered: ', registration);
+                  })
+                  .catch(function(registrationError) {
+                    console.log('SW registration failed: ', registrationError);
+                  });
+              });
+            }
+          `,
+        }}
+      />
+
+      {/* Performance and Analytics Scripts */}
+      {process.env.NODE_ENV === 'production' && (
+        <>
+          {/* Vercel Analytics */}
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `
+                (function() {
+                  var script = document.createElement('script');
+                  script.src = 'https://vercel.com/vitals';
+                  script.defer = true;
+                  document.head.appendChild(script);
+                })();
+              `,
+            }}
+          />
+        </>
+      )}
         </WalletProvider>
       </body>
     </html>

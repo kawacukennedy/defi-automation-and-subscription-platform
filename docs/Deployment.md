@@ -32,24 +32,29 @@ FlowFi uses a multi-service architecture deployed across different platforms:
 Create `.env.production` with production values:
 
 ```env
-# Frontend
+# Frontend (.env.example)
+NEXT_PUBLIC_APP_ENV=production
+NEXT_PUBLIC_APP_URL=https://yourdomain.com
 NEXT_PUBLIC_FLOW_ACCESS_NODE=https://access-mainnet.onflow.org
-NEXT_PUBLIC_FLOW_WALLET_DISCOVERY=https://fcl-discovery.onflow.org/mainnet/authn
+NEXT_PUBLIC_FLOW_DISCOVERY_WALLET=https://fcl-discovery.onflow.org/mainnet/authn
+NEXT_PUBLIC_FLOW_TOKEN=0x7e60df042a9c0868
+NEXT_PUBLIC_FUNGIBLE_TOKEN=0x9a0766d93b6608b7
+NEXT_PUBLIC_NON_FUNGIBLE_TOKEN=0x1d7e57aa55817448
+NEXT_PUBLIC_ANALYTICS_ID=your_analytics_id
+ANALYZE=false
 
-# Backend
+# Backend (.env)
+PORT=3001
+NODE_ENV=production
 MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/flowfi_prod
 REDIS_URL=rediss://username:password@host:port
 FLOW_ACCESS_NODE=https://access-mainnet.onflow.org
 QUICKNODE_API_KEY=your_production_quicknode_key
-TELEGRAM_BOT_TOKEN=your_production_telegram_token
 MOONPAY_API_KEY=your_production_moonpay_key
 PRIVY_API_KEY=your_production_privy_key
 THIRDWEB_API_KEY=your_production_thirdweb_key
-PORT=3001
-
-# Security
+TELEGRAM_BOT_TOKEN=your_production_telegram_token
 JWT_SECRET=your_secure_jwt_secret
-ENCRYPTION_KEY=your_32_character_encryption_key
 ```
 
 ## Frontend Deployment
@@ -64,23 +69,39 @@ ENCRYPTION_KEY=your_32_character_encryption_key
    ```
 
 2. **Configure Build Settings**
-   ```json
-   {
-     "version": 2,
-     "builds": [
-       {
-         "src": "frontend/package.json",
-         "use": "@vercel/next"
-       }
-     ],
-     "routes": [
-       {
-         "src": "/(.*)",
-         "dest": "/frontend/$1"
-       }
-     ]
-   }
-   ```
+    ```json
+    {
+      "version": 2,
+      "builds": [
+        {
+          "src": "frontend/package.json",
+          "use": "@vercel/next"
+        },
+        {
+          "src": "backend/index.js",
+          "use": "@vercel/node"
+        }
+      ],
+      "routes": [
+        {
+          "src": "/api/(.*)",
+          "dest": "/backend/index.js"
+        },
+        {
+          "src": "/(.*)",
+          "dest": "/frontend/$1"
+        }
+      ],
+      "env": {
+        "NODE_ENV": "production"
+      },
+      "functions": {
+        "backend/index.js": {
+          "maxDuration": 30
+        }
+      }
+    }
+    ```
 
 3. **Set Environment Variables**
    ```bash

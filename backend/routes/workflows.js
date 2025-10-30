@@ -2,12 +2,14 @@ const express = require('express');
 const router = express.Router();
 const workflowService = require('../services/workflowService');
 const { authenticateUser } = require('../middleware/auth');
+const { validateWorkflowData, sanitizeInput } = require('../middleware/validation');
 
-// All workflow routes require authentication
+// All workflow routes require authentication and input sanitization
 router.use(authenticateUser);
+router.use(sanitizeInput);
 
 // Create workflow
-router.post('/', async (req, res) => {
+router.post('/', validateWorkflowData, async (req, res) => {
   try {
     const workflowData = {
       ...req.body,
