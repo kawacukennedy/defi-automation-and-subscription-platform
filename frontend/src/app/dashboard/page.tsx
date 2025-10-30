@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { useWallet } from '@/lib/WalletContext';
+import Loading from '@/components/Loading';
 
 interface Workflow {
   workflowId: string;
@@ -84,14 +85,7 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-green-900 flex items-center justify-center">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-          className="text-white text-xl"
-        >
-          Loading Dashboard...
-        </motion.div>
+        <Loading size="lg" text="Loading Dashboard..." className="text-white" />
       </div>
     );
   }
@@ -178,6 +172,37 @@ export default function Dashboard() {
             ))}
           </motion.div>
 
+          {/* Quick Actions */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className="bg-black/20 backdrop-blur-md border border-white/10 p-6 rounded-xl mb-8"
+          >
+            <h2 className="text-xl font-semibold mb-4 bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
+              Quick Actions
+            </h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[
+                { label: 'Create Workflow', icon: '➕', href: '/create-workflow', color: 'from-green-400 to-green-600' },
+                { label: 'View Analytics', icon: '📈', href: '/analytics', color: 'from-blue-400 to-blue-600' },
+                { label: 'Community', icon: '👥', href: '/community', color: 'from-purple-400 to-purple-600' },
+                { label: 'Settings', icon: '⚙️', href: '/settings', color: 'from-yellow-400 to-yellow-600' }
+              ].map((action, index) => (
+                <Link key={action.href} href={action.href}>
+                  <motion.div
+                    whileHover={{ scale: 1.05, boxShadow: '0 0 20px rgba(0,255,0,0.2)' }}
+                    whileTap={{ scale: 0.95 }}
+                    className={`bg-gradient-to-br ${action.color} bg-opacity-10 border border-white/10 p-4 rounded-xl text-center hover:border-white/20 transition-all cursor-pointer`}
+                  >
+                    <div className="text-2xl mb-2">{action.icon}</div>
+                    <p className="text-sm font-medium">{action.label}</p>
+                  </motion.div>
+                </Link>
+              ))}
+            </div>
+          </motion.div>
+
           {/* Active Workflows */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -191,28 +216,77 @@ export default function Dashboard() {
             {workflows.length === 0 ? (
               <p className="text-gray-400">No workflows yet. Create your first workflow!</p>
             ) : (
-              <div className="space-y-4">
-                {workflows.slice(0, 5).map((workflow, index) => (
-                  <motion.div
-                    key={workflow.workflowId}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.4, delay: index * 0.1 }}
-                    whileHover={{ scale: 1.02, backgroundColor: 'rgba(255,255,255,0.05)' }}
-                    className="flex justify-between items-center p-4 border border-white/10 rounded-lg hover:border-green-400/50 transition-all"
-                  >
-                    <div>
-                      <h3 className="font-semibold">{workflow.name || `Workflow ${workflow.workflowId.slice(-8)}`}</h3>
-                      <p className="text-sm text-gray-400">{workflow.action} • Status: <span className={`font-medium ${workflow.status === 'active' ? 'text-green-400' : 'text-yellow-400'}`}>{workflow.status}</span></p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm">Executions: {workflow.executionCount}</p>
-                      <p className="text-sm text-gray-400">
-                        Next: {workflow.nextExecution ? new Date(workflow.nextExecution).toLocaleDateString() : 'N/A'}
-                      </p>
-                    </div>
-                  </motion.div>
-                ))}
+               <div className="grid gap-4 md:grid-cols-2">
+                 {workflows.slice(0, 6).map((workflow, index) => {
+                   const statusConfig = {
+                     active: { color: 'text-green-400', bg: 'bg-green-400/10', icon: '🟢', label: 'Active' },
+                     paused: { color: 'text-yellow-400', bg: 'bg-yellow-400/10', icon: '⏸️', label: 'Paused' },
+                     error: { color: 'text-red-400', bg: 'bg-red-400/10', icon: '❌', label: 'Error' },
+                     completed: { color: 'text-blue-400', bg: 'bg-blue-400/10', icon: '✅', label: 'Completed' }
+                   };
+                   const status = statusConfig[workflow.status as keyof typeof statusConfig] || statusConfig.active;
+
+                   return (
+                     <motion.div
+                       key={workflow.workflowId}
+                       initial={{ opacity: 0, y: 20 }}
+                       animate={{ opacity: 1, y: 0 }}
+                       transition={{ duration: 0.4, delay: index * 0.1 }}
+                       whileHover={{ scale: 1.02, boxShadow: '0 0 20px rgba(0,255,0,0.1)' }}
+                       className="bg-black/20 backdrop-blur-md border border-white/10 p-6 rounded-xl hover:border-green-400/50 transition-all"
+                     >
+                       <div className="flex items-start justify-between mb-4">
+                         <div className="flex-1">
+                           <h3 className="font-semibold text-lg mb-1">{workflow.name || `Workflow ${workflow.workflowId.slice(-8)}`}</h3>
+                           <p className="text-sm text-gray-400 mb-2">{workflow.action}</p>
+                         </div>
+                         <div className={`px-3 py-1 rounded-full text-xs font-medium ${status.bg} ${status.color} flex items-center gap-1`}>
+                           <span>{status.icon}</span>
+                           {status.label}
+                         </div>
+                       </div>
+
+                       <div className="grid grid-cols-2 gap-4 mb-4">
+                         <div>
+                           <p className="text-sm text-gray-400">Executions</p>
+                           <p className="text-lg font-semibold">{workflow.executionCount}</p>
+                         </div>
+                         <div>
+                           <p className="text-sm text-gray-400">Success Rate</p>
+                           <p className="text-lg font-semibold text-green-400">98%</p>
+                         </div>
+                       </div>
+
+                       <div className="flex items-center justify-between text-sm">
+                         <div>
+                           <p className="text-gray-400">Last Execution</p>
+                           <p>{workflow.lastExecution ? new Date(workflow.lastExecution).toLocaleDateString() : 'Never'}</p>
+                         </div>
+                         <div className="text-right">
+                           <p className="text-gray-400">Next Run</p>
+                           <p>{workflow.nextExecution ? new Date(workflow.nextExecution).toLocaleDateString() : 'N/A'}</p>
+                         </div>
+                       </div>
+
+                       <div className="mt-4 flex gap-2">
+                         <motion.button
+                           whileHover={{ scale: 1.05 }}
+                           whileTap={{ scale: 0.95 }}
+                           className="flex-1 bg-green-500/20 hover:bg-green-500/30 text-green-400 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                         >
+                           Edit
+                         </motion.button>
+                         <motion.button
+                           whileHover={{ scale: 1.05 }}
+                           whileTap={{ scale: 0.95 }}
+                           className="flex-1 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                         >
+                           Run Now
+                         </motion.button>
+                       </div>
+                     </motion.div>
+                   );
+                 })}
               </div>
             )}
           </motion.div>

@@ -26,7 +26,42 @@ export default function Home() {
   if (!mounted) return null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-green-900 text-white overflow-x-hidden">
+    <>
+      {/* Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "SoftwareApplication",
+            "name": "FlowFi",
+            "description": "DeFi Automation & Subscription Platform on Flow blockchain",
+            "applicationCategory": "FinanceApplication",
+            "operatingSystem": "Web",
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            },
+            "creator": {
+              "@type": "Organization",
+              "name": "FlowFi Team"
+            },
+            "featureList": [
+              "Automated recurring payments",
+              "DeFi workflow automation",
+              "NFT achievements and gamification",
+              "Real-time analytics"
+            ],
+            "url": "https://flowfi.vercel.app",
+            "sameAs": [
+              "https://github.com/kawacukennedy/defi-automation-and-subscription-platform"
+            ]
+          })
+        }}
+      />
+
+      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-green-900 text-white overflow-x-hidden">
       {/* Particle Background Effect */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,255,0,0.1),transparent_50%)] animate-pulse"></div>
@@ -327,5 +362,6 @@ export default function Home() {
         </div>
       </motion.section>
     </div>
+    </>
   );
 }

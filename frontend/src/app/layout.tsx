@@ -8,26 +8,27 @@ import { useState, useEffect, Suspense } from "react";
 import dynamic from 'next/dynamic';
 import { motion } from 'framer-motion';
 import ErrorBoundary from "@/components/ErrorBoundary";
+import Loading from "@/components/Loading";
 
 // Lazy load heavy components
 const MotionDiv = dynamic(() => import('framer-motion').then(mod => ({ default: mod.motion.div })), {
   ssr: false,
-  loading: () => <div className="animate-pulse bg-gray-200 rounded h-4 w-20"></div>
+  loading: () => <Loading size="sm" text="Loading..." />
 });
 
 const MotionNav = dynamic(() => import('framer-motion').then(mod => ({ default: mod.motion.nav })), {
   ssr: false,
-  loading: () => <nav className="p-4 bg-gray-100">Loading navigation...</nav>
+  loading: () => <Loading size="md" text="Loading navigation..." />
 });
 
 const MotionFooter = dynamic(() => import('framer-motion').then(mod => ({ default: mod.motion.footer })), {
   ssr: false,
-  loading: () => <footer className="py-12 bg-gray-100">Loading footer...</footer>
+  loading: () => <Loading size="md" text="Loading footer..." />
 });
 
 const MotionButton = dynamic(() => import('framer-motion').then(mod => ({ default: mod.motion.button })), {
   ssr: false,
-  loading: () => <button className="p-2 rounded-lg">Loading...</button>
+  loading: () => <Loading size="sm" />
 });
 
 const geistSans = Geist({
@@ -54,6 +55,7 @@ export default function RootLayout({
     { id: 3, message: 'Community template forked by user', time: '3 hours ago', unread: false },
   ]);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme');
@@ -82,7 +84,20 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-title" content="FlowFi" />
         <meta name="description" content="Automate DeFi actions, recurring crypto payments, staking, swaps, NFT rewards, DAO governance on Flow blockchain" />
         <meta name="keywords" content="DeFi, Flow, Blockchain, Automation, Crypto, NFT, DAO, Web3" />
+        <meta name="author" content="FlowFi Team" />
+        <meta name="robots" content="index, follow" />
+        <meta name="googlebot" content="index, follow" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <meta name="format-detection" content="telephone=no" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="FlowFi - DeFi Automation & Subscription Platform" />
+        <meta property="og:description" content="Automate DeFi actions, recurring crypto payments, staking, swaps, NFT rewards, DAO governance on Flow blockchain" />
+        <meta property="og:url" content="https://flowfi.vercel.app" />
+        <meta property="og:image" content="https://flowfi.vercel.app/og-image.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="FlowFi - DeFi Automation Platform" />
+        <meta name="twitter:description" content="Automate your DeFi workflows on Flow blockchain with AI-powered insights" />
+        <meta name="twitter:image" content="https://flowfi.vercel.app/og-image.png" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="msapplication-config" content="/browserconfig.xml" />
         <meta name="msapplication-TileColor" content="#00ef8b" />
@@ -204,18 +219,115 @@ export default function RootLayout({
                   )}
                 </div>
 
-                {/* Mobile Menu */}
-                <div className="md:hidden">
-                  <button className={`p-2 rounded-lg ${darkMode ? 'bg-white/10' : 'bg-black/10'}`}>
-                    ☰
-                  </button>
-                </div>
+                 {/* Mobile Menu */}
+                 <div className="md:hidden">
+                   <motion.button
+                     whileTap={{ scale: 0.9 }}
+                     onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                     className={`p-2 rounded-lg ${darkMode ? 'bg-white/10' : 'bg-black/10'}`}
+                   >
+                     <motion.div
+                       animate={mobileMenuOpen ? 'open' : 'closed'}
+                       className="w-6 h-5 relative"
+                     >
+                       <motion.span
+                         variants={{
+                           closed: { rotate: 0, y: 0 },
+                           open: { rotate: 45, y: 8 }
+                         }}
+                         className="absolute top-0 left-0 w-6 h-0.5 bg-current block transform origin-center transition-all duration-300"
+                       />
+                       <motion.span
+                         variants={{
+                           closed: { opacity: 1 },
+                           open: { opacity: 0 }
+                         }}
+                         className="absolute top-2 left-0 w-6 h-0.5 bg-current block transform origin-center transition-all duration-300"
+                       />
+                       <motion.span
+                         variants={{
+                           closed: { rotate: 0, y: 0 },
+                           open: { rotate: -45, y: -8 }
+                         }}
+                         className="absolute top-4 left-0 w-6 h-0.5 bg-current block transform origin-center transition-all duration-300"
+                       />
+                     </motion.div>
+                   </motion.button>
+                 </div>
               </div>
             </div>
             </MotionNav>
-          </Suspense>
+           </Suspense>
 
-          {/* Main Content */}
+           {/* Mobile Menu Overlay */}
+           {mobileMenuOpen && (
+             <motion.div
+               initial={{ opacity: 0 }}
+               animate={{ opacity: 1 }}
+               exit={{ opacity: 0 }}
+               className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden"
+               onClick={() => setMobileMenuOpen(false)}
+             />
+           )}
+
+           {/* Mobile Menu */}
+           <motion.div
+             initial={{ x: '100%' }}
+             animate={{ x: mobileMenuOpen ? 0 : '100%' }}
+             transition={{ type: 'tween', duration: 0.3 }}
+             className="fixed top-0 right-0 h-full w-80 bg-black/95 backdrop-blur-md border-l border-white/10 z-50 md:hidden"
+           >
+             <div className="p-6">
+               <div className="flex justify-between items-center mb-8">
+                 <h2 className="text-xl font-bold bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
+                   FlowFi
+                 </h2>
+                 <motion.button
+                   whileTap={{ scale: 0.9 }}
+                   onClick={() => setMobileMenuOpen(false)}
+                   className="p-2 rounded-lg bg-white/10"
+                 >
+                   ✕
+                 </motion.button>
+               </div>
+               <nav className="space-y-4">
+                 {[
+                   { href: '/dashboard', label: 'Dashboard' },
+                   { href: '/create-workflow', label: 'Create Workflow' },
+                   { href: '/analytics', label: 'Analytics' },
+                   { href: '/community', label: 'Community' },
+                   { href: '/leaderboard', label: 'Leaderboard' },
+                   { href: '/settings', label: 'Settings' },
+                   { href: '/admin', label: 'Admin' }
+                 ].map((item) => (
+                   <Link
+                     key={item.href}
+                     href={item.href}
+                     onClick={() => setMobileMenuOpen(false)}
+                     className={`block py-3 px-4 rounded-lg transition-colors ${
+                       darkMode ? 'text-white hover:bg-white/10' : 'text-gray-900 hover:bg-black/10'
+                     }`}
+                   >
+                     {item.label}
+                   </Link>
+                 ))}
+               </nav>
+               <div className="mt-8 pt-8 border-t border-white/10">
+                 <div className="flex items-center justify-between">
+                   <span className="text-sm text-gray-400">Theme</span>
+                   <motion.button
+                     whileTap={{ scale: 0.9 }}
+                     onClick={toggleTheme}
+                     className="p-2 rounded-lg bg-white/10"
+                   >
+                     {darkMode ? '☀️' : '🌙'}
+                   </motion.button>
+                 </div>
+               </div>
+             </div>
+           </motion.div>
+
+           {/* Main Content */}
           <main className="min-h-screen">
             <ErrorBoundary>
               {children}
@@ -233,46 +345,52 @@ export default function RootLayout({
               } py-12`}
             >
             <div className="container mx-auto px-4">
-              <div className="grid md:grid-cols-4 gap-8">
-                <div>
-                  <h3 className="text-xl font-bold bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent mb-4">
-                    FlowFi
-                  </h3>
-                  <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                    Automating DeFi workflows on Flow blockchain with Forte Actions and AI-powered insights.
-                  </p>
-                </div>
-                <div>
-                  <h4 className="font-semibold mb-4">Product</h4>
-                  <ul className={`space-y-2 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                    <li><Link href="/dashboard" className="hover:text-green-400 transition-colors">Dashboard</Link></li>
-                    <li><Link href="/create-workflow" className="hover:text-green-400 transition-colors">Create Workflow</Link></li>
-                    <li><Link href="/analytics" className="hover:text-green-400 transition-colors">Analytics</Link></li>
-                    <li><Link href="/community" className="hover:text-green-400 transition-colors">Community</Link></li>
-                  </ul>
-                </div>
-                <div>
-                  <h4 className="font-semibold mb-4">Resources</h4>
-                  <ul className={`space-y-2 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                    <li><a href="#" className="hover:text-green-400 transition-colors">Documentation</a></li>
-                    <li><a href="#" className="hover:text-green-400 transition-colors">API Reference</a></li>
-                    <li><a href="#" className="hover:text-green-400 transition-colors">Help Center</a></li>
-                    <li><a href="#" className="hover:text-green-400 transition-colors">Community Forum</a></li>
-                  </ul>
-                </div>
-                <div>
-                  <h4 className="font-semibold mb-4">Connect</h4>
-                  <div className="flex space-x-4">
-                    <a href="#" className="text-2xl hover:scale-110 transition-transform">🐦</a>
-                    <a href="#" className="text-2xl hover:scale-110 transition-transform">💬</a>
-                    <a href="#" className="text-2xl hover:scale-110 transition-transform">📧</a>
-                    <a href="#" className="text-2xl hover:scale-110 transition-transform">🔗</a>
-                  </div>
-                  <p className={`text-xs mt-4 ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>
-                    Built for Forte Hacks 2025
-                  </p>
-                </div>
-              </div>
+               <div className="grid md:grid-cols-5 gap-8">
+                 <div className="md:col-span-2">
+                   <h3 className="text-xl font-bold bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent mb-4">
+                     FlowFi
+                   </h3>
+                   <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'} mb-4`}>
+                     Automating DeFi workflows on Flow blockchain with Forte Actions and AI-powered insights.
+                   </p>
+                   <div className="flex space-x-4">
+                     <a href="https://twitter.com/flowfi" className="text-2xl hover:scale-110 transition-transform" aria-label="Twitter">🐦</a>
+                     <a href="https://discord.gg/flowfi" className="text-2xl hover:scale-110 transition-transform" aria-label="Discord">💬</a>
+                     <a href="mailto:hello@flowfi.com" className="text-2xl hover:scale-110 transition-transform" aria-label="Email">📧</a>
+                     <a href="https://github.com/kawacukennedy/defi-automation-and-subscription-platform" className="text-2xl hover:scale-110 transition-transform" aria-label="GitHub">🔗</a>
+                   </div>
+                 </div>
+                 <div>
+                   <h4 className="font-semibold mb-4">Product</h4>
+                   <ul className={`space-y-2 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                     <li><Link href="/dashboard" className="hover:text-green-400 transition-colors">Dashboard</Link></li>
+                     <li><Link href="/create-workflow" className="hover:text-green-400 transition-colors">Create Workflow</Link></li>
+                     <li><Link href="/analytics" className="hover:text-green-400 transition-colors">Analytics</Link></li>
+                     <li><Link href="/leaderboard" className="hover:text-green-400 transition-colors">Leaderboard</Link></li>
+                   </ul>
+                 </div>
+                 <div>
+                   <h4 className="font-semibold mb-4">Resources</h4>
+                   <ul className={`space-y-2 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                     <li><a href="/docs" className="hover:text-green-400 transition-colors">Documentation</a></li>
+                     <li><a href="/api" className="hover:text-green-400 transition-colors">API Reference</a></li>
+                     <li><a href="/help" className="hover:text-green-400 transition-colors">Help Center</a></li>
+                     <li><Link href="/community" className="hover:text-green-400 transition-colors">Community Forum</Link></li>
+                   </ul>
+                 </div>
+                 <div>
+                   <h4 className="font-semibold mb-4">Company</h4>
+                   <ul className={`space-y-2 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                     <li><a href="/about" className="hover:text-green-400 transition-colors">About Us</a></li>
+                     <li><a href="/blog" className="hover:text-green-400 transition-colors">Blog</a></li>
+                     <li><a href="/careers" className="hover:text-green-400 transition-colors">Careers</a></li>
+                     <li><Link href="/settings" className="hover:text-green-400 transition-colors">Settings</Link></li>
+                   </ul>
+                   <p className={`text-xs mt-4 ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+                     Built for Forte Hacks 2025
+                   </p>
+                 </div>
+               </div>
               <div className={`border-t ${darkMode ? 'border-white/10' : 'border-gray-200'} mt-8 pt-8 text-center`}>
                 <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                   © 2025 FlowFi. All rights reserved. | Powered by Flow Blockchain & Forte
