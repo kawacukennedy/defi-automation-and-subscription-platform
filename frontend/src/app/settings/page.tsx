@@ -512,9 +512,11 @@ export default function Settings() {
 
           {/* Main Content */}
           <motion.main
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.4 }}
+            key={activeTab}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
             className="flex-1"
             role="tabpanel"
             aria-labelledby={`tab-${activeTab}`}

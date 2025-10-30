@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
 import { useWallet } from '@/lib/WalletContext';
 import { useEffect, useState } from 'react';
 
@@ -65,26 +65,30 @@ export default function Home() {
       {/* Particle Background Effect */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,255,0,0.1),transparent_50%)] animate-pulse"></div>
-        {[...Array(20)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-1 h-1 bg-green-400 rounded-full opacity-60"
-            animate={{
-              x: [0, Math.random() * 100 - 50],
-              y: [0, Math.random() * 100 - 50],
-              scale: [0, 1, 0],
-            }}
-            transition={{
-              duration: Math.random() * 3 + 2,
-              repeat: Infinity,
-              delay: Math.random() * 2,
-            }}
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-            }}
-          />
-        ))}
+        <AnimatePresence>
+          {[...Array(15)].map((_, i) => (
+            <motion.div
+              key={i}
+              className="absolute w-1 h-1 bg-green-400 rounded-full opacity-60"
+              animate={{
+                x: [0, Math.random() * 100 - 50],
+                y: [0, Math.random() * 100 - 50],
+                scale: [0, 1, 0],
+              }}
+              transition={{
+                duration: Math.random() * 3 + 2,
+                repeat: Infinity,
+                delay: Math.random() * 2,
+                ease: "easeInOut",
+              }}
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+              }}
+              layout={false}
+            />
+          ))}
+        </AnimatePresence>
       </div>
 
       {/* Hero Section */}
@@ -175,11 +179,13 @@ export default function Home() {
                 duration: 2 + index * 0.5,
                 repeat: Infinity,
                 delay: index * 0.3,
+                ease: "easeInOut",
               }}
               style={{
                 left: `${20 + index * 20}%`,
                 top: `${30 + index * 10}%`,
               }}
+              layout={false}
             >
               {icon}
             </motion.div>
@@ -223,14 +229,15 @@ export default function Home() {
                key={feature.title}
                initial={{ opacity: 0, y: 50 }}
                whileInView={{ opacity: 1, y: 0 }}
-               transition={{ duration: 0.6, delay: index * 0.2 }}
-               viewport={{ once: true }}
+               transition={{ duration: 0.6, delay: index * 0.2, ease: "easeOut" }}
+               viewport={{ once: true, margin: "-100px" }}
                whileHover={{
                  scale: 1.05,
                  boxShadow: '0 0 30px rgba(0,255,0,0.4)',
                  y: -5
                }}
                className={`bg-black/20 backdrop-blur-md border border-white/10 p-8 rounded-2xl hover:border-white/20 transition-all duration-500 bg-gradient-to-br ${feature.color} bg-opacity-10 cursor-pointer group`}
+               layout={false}
              >
                <motion.div
                  className="text-5xl mb-4"
@@ -299,14 +306,15 @@ export default function Home() {
                key={testimonial.name}
                initial={{ opacity: 0, y: 50 }}
                whileInView={{ opacity: 1, y: 0 }}
-               transition={{ duration: 0.6, delay: index * 0.2 }}
-               viewport={{ once: true }}
+               transition={{ duration: 0.6, delay: index * 0.2, ease: "easeOut" }}
+               viewport={{ once: true, margin: "-50px" }}
                whileHover={{
                  scale: 1.03,
                  boxShadow: '0 0 25px rgba(0,255,0,0.2)',
                  y: -3
                }}
                className="bg-black/20 backdrop-blur-md border border-white/10 p-6 rounded-2xl hover:border-green-400/30 transition-all duration-300 group"
+               layout={false}
              >
                <motion.div
                  className="flex items-center mb-4"
@@ -361,7 +369,7 @@ export default function Home() {
                  key={partner}
                  initial={{ opacity: 0, scale: 0.8 }}
                  whileInView={{ opacity: 1, scale: 1 }}
-                 transition={{ duration: 0.4, delay: index * 0.1 }}
+                 transition={{ duration: 0.4, delay: index * 0.1, ease: "easeOut" }}
                  viewport={{ once: true }}
                  whileHover={{
                    scale: 1.05,
@@ -369,6 +377,7 @@ export default function Home() {
                    y: -2
                  }}
                  className="bg-white/10 backdrop-blur-md px-6 py-3 rounded-lg border border-white/20 hover:border-white/40 transition-all duration-300 cursor-pointer group"
+                 layout={false}
                >
                  <motion.span
                    className="font-semibold text-lg group-hover:text-green-300 transition-colors"

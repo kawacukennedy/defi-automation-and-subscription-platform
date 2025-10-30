@@ -9,11 +9,10 @@ import dynamic from 'next/dynamic';
 import { motion } from 'framer-motion';
 import ErrorBoundary from "@/components/ErrorBoundary";
 import Loading from "@/components/Loading";
-import { ThemeProvider } from "@/lib/ThemeContext";
+import { ThemeProvider, useTheme } from "@/lib/ThemeContext";
 import { ToastProvider } from "@/lib/ToastContext";
 import ThemeToggle from "@/components/ThemeToggle";
 import SearchBar from "@/components/SearchBar";
-import { useState } from "react";
 import ToastContainer from "@/components/ToastContainer";
 
 // Lazy load heavy components
@@ -37,6 +36,11 @@ const MotionButton = dynamic(() => import('framer-motion').then(mod => ({ defaul
   loading: () => <Loading size="sm" />
 });
 
+const MotionSpan = dynamic(() => import('framer-motion').then(mod => ({ default: mod.motion.span })), {
+  ssr: false,
+  loading: () => <span></span>
+});
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -47,13 +51,12 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-
-
-export default function RootLayout({
+function LayoutContent({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const { theme } = useTheme();
   const [notifications, setNotifications] = useState([
     { id: 1, message: 'Workflow "Staking" executed successfully', time: '2 min ago', unread: true },
     { id: 2, message: 'New achievement unlocked: "Early Adopter"', time: '1 hour ago', unread: true },
@@ -67,7 +70,7 @@ export default function RootLayout({
   const unreadCount = notifications.filter(n => n.unread).length;
 
   return (
-    <html lang="en" className={darkMode ? 'dark' : ''}>
+    <html lang="en" className={theme === 'dark' ? 'dark' : ''}>
       <head>
         <title>FlowFi - DeFi Automation & Subscription Platform</title>
         {/* PWA Meta Tags */}
@@ -137,7 +140,7 @@ export default function RootLayout({
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.5 }}
               className={`backdrop-blur-md border-b ${
-                darkMode ? 'bg-black/20 border-white/10' : 'bg-white/20 border-gray-200'
+                theme === 'dark' ? 'bg-black/20 border-white/10' : 'bg-white/20 border-gray-200'
               } p-4 sticky top-0 z-50`}
             >
             <div className="container mx-auto flex justify-between items-center">
@@ -146,13 +149,13 @@ export default function RootLayout({
               </Link>
               <div className="flex items-center space-x-6">
                 <div className="hidden md:flex space-x-4">
-                   <Link href="/dashboard" className={`hover:text-green-400 transition-colors ${darkMode ? 'text-white' : 'text-gray-900'}`}>Dashboard</Link>
-                   <Link href="/create-workflow" className={`hover:text-green-400 transition-colors ${darkMode ? 'text-white' : 'text-gray-900'}`}>Create Workflow</Link>
-                   <Link href="/analytics" className={`hover:text-green-400 transition-colors ${darkMode ? 'text-white' : 'text-gray-900'}`}>Analytics</Link>
-                   <Link href="/community" className={`hover:text-green-400 transition-colors ${darkMode ? 'text-white' : 'text-gray-900'}`}>Community</Link>
-                   <Link href="/leaderboard" className={`hover:text-green-400 transition-colors ${darkMode ? 'text-white' : 'text-gray-900'}`}>Leaderboard</Link>
-                   <Link href="/settings" className={`hover:text-green-400 transition-colors ${darkMode ? 'text-white' : 'text-gray-900'}`}>Settings</Link>
-                   <Link href="/contact" className={`hover:text-green-400 transition-colors ${darkMode ? 'text-white' : 'text-gray-900'}`}>Contact</Link>
+                    <Link href="/dashboard" className={`hover:text-green-400 transition-colors ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Dashboard</Link>
+                    <Link href="/create-workflow" className={`hover:text-green-400 transition-colors ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Create Workflow</Link>
+                    <Link href="/analytics" className={`hover:text-green-400 transition-colors ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Analytics</Link>
+                    <Link href="/community" className={`hover:text-green-400 transition-colors ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Community</Link>
+                    <Link href="/leaderboard" className={`hover:text-green-400 transition-colors ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Leaderboard</Link>
+                    <Link href="/settings" className={`hover:text-green-400 transition-colors ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Settings</Link>
+                    <Link href="/contact" className={`hover:text-green-400 transition-colors ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Contact</Link>
                 </div>
 
                  {/* Search */}
@@ -163,7 +166,7 @@ export default function RootLayout({
 
                 {/* Mobile Menu Button */}
                 <div className="md:hidden">
-                  <motion.button
+                  <MotionButton
                     whileTap={{ scale: 0.9 }}
                     onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                     className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
@@ -175,21 +178,21 @@ export default function RootLayout({
                       className="w-6 h-5 relative"
                       aria-hidden="true"
                     >
-                      <motion.span
+                      <MotionSpan
                         variants={{
                           closed: { rotate: 0, y: 0 },
                           open: { rotate: 45, y: 8 }
                         }}
                         className="absolute top-0 left-0 w-6 h-0.5 bg-current block transform origin-center transition-all duration-300"
                       />
-                      <motion.span
+                      <MotionSpan
                         variants={{
                           closed: { opacity: 1 },
                           open: { opacity: 0 }
                         }}
                         className="absolute top-2 left-0 w-6 h-0.5 bg-current block transform origin-center transition-all duration-300"
                       />
-                      <motion.span
+                      <MotionSpan
                         variants={{
                           closed: { rotate: 0, y: 0 },
                           open: { rotate: -45, y: -8 }
@@ -197,11 +200,10 @@ export default function RootLayout({
                         className="absolute top-4 left-0 w-6 h-0.5 bg-current block transform origin-center transition-all duration-300"
                       />
                     </motion.div>
-                  </motion.button>
-                </div>
+                   </MotionButton>
                  </div>
-              </div>
-            </div>
+               </div>
+             </div>
             </MotionNav>
            </Suspense>
 
@@ -228,13 +230,13 @@ export default function RootLayout({
                  <h2 className="text-xl font-bold bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
                    FlowFi
                  </h2>
-                 <motion.button
-                   whileTap={{ scale: 0.9 }}
-                   onClick={() => setMobileMenuOpen(false)}
-                   className="p-2 rounded-lg bg-white/10"
-                 >
-                   ✕
-                 </motion.button>
+                  <MotionButton
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="p-2 rounded-lg bg-white/10"
+                  >
+                    ✕
+                  </MotionButton>
                </div>
                <nav className="space-y-4">
                   {[
@@ -250,9 +252,9 @@ export default function RootLayout({
                      key={item.href}
                      href={item.href}
                      onClick={() => setMobileMenuOpen(false)}
-                     className={`block py-3 px-4 rounded-lg transition-colors ${
-                       darkMode ? 'text-white hover:bg-white/10' : 'text-gray-900 hover:bg-black/10'
-                     }`}
+                      className={`block py-3 px-4 rounded-lg transition-colors ${
+                        theme === 'dark' ? 'text-white hover:bg-white/10' : 'text-gray-900 hover:bg-black/10'
+                      }`}
                    >
                      {item.label}
                    </Link>
@@ -281,7 +283,7 @@ export default function RootLayout({
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
               className={`backdrop-blur-md border-t ${
-                darkMode ? 'bg-black/20 border-white/10' : 'bg-white/20 border-gray-200'
+                theme === 'dark' ? 'bg-black/20 border-white/10' : 'bg-white/20 border-gray-200'
               } py-12`}
             >
             <div className="container mx-auto px-4">
@@ -290,7 +292,7 @@ export default function RootLayout({
                    <h3 className="text-xl font-bold bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent mb-4">
                      FlowFi
                    </h3>
-                   <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'} mb-4`}>
+                    <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} mb-4`}>
                      Automating DeFi workflows on Flow blockchain with Forte Actions and AI-powered insights.
                    </p>
                    <div className="flex space-x-4">
@@ -300,39 +302,39 @@ export default function RootLayout({
                      <a href="https://github.com/kawacukennedy/defi-automation-and-subscription-platform" className="text-2xl hover:scale-110 transition-transform" aria-label="GitHub">🔗</a>
                    </div>
                  </div>
-                 <div>
-                   <h4 className="font-semibold mb-4">Product</h4>
-                   <ul className={`space-y-2 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                     <li><Link href="/dashboard" className="hover:text-green-400 transition-colors">Dashboard</Link></li>
-                     <li><Link href="/create-workflow" className="hover:text-green-400 transition-colors">Create Workflow</Link></li>
-                     <li><Link href="/analytics" className="hover:text-green-400 transition-colors">Analytics</Link></li>
-                     <li><Link href="/leaderboard" className="hover:text-green-400 transition-colors">Leaderboard</Link></li>
-                   </ul>
-                 </div>
-                 <div>
-                   <h4 className="font-semibold mb-4">Resources</h4>
-                   <ul className={`space-y-2 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                     <li><a href="/docs" className="hover:text-green-400 transition-colors">Documentation</a></li>
-                     <li><a href="/api" className="hover:text-green-400 transition-colors">API Reference</a></li>
-                     <li><a href="/help" className="hover:text-green-400 transition-colors">Help Center</a></li>
-                     <li><Link href="/community" className="hover:text-green-400 transition-colors">Community Forum</Link></li>
-                   </ul>
-                 </div>
-                 <div>
-                   <h4 className="font-semibold mb-4">Company</h4>
-                   <ul className={`space-y-2 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                     <li><a href="/about" className="hover:text-green-400 transition-colors">About Us</a></li>
-                     <li><a href="/blog" className="hover:text-green-400 transition-colors">Blog</a></li>
-                     <li><a href="/careers" className="hover:text-green-400 transition-colors">Careers</a></li>
-                     <li><Link href="/settings" className="hover:text-green-400 transition-colors">Settings</Link></li>
-                   </ul>
-                   <p className={`text-xs mt-4 ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>
-                     Built for Forte Hacks 2025
-                   </p>
-                 </div>
+                  <div>
+                    <h4 className="font-semibold mb-4">Product</h4>
+                    <ul className={`space-y-2 text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                      <li><Link href="/dashboard" className="hover:text-green-400 transition-colors">Dashboard</Link></li>
+                      <li><Link href="/create-workflow" className="hover:text-green-400 transition-colors">Create Workflow</Link></li>
+                      <li><Link href="/analytics" className="hover:text-green-400 transition-colors">Analytics</Link></li>
+                      <li><Link href="/leaderboard" className="hover:text-green-400 transition-colors">Leaderboard</Link></li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold mb-4">Resources</h4>
+                    <ul className={`space-y-2 text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                      <li><a href="/docs" className="hover:text-green-400 transition-colors">Documentation</a></li>
+                      <li><a href="/api" className="hover:text-green-400 transition-colors">API Reference</a></li>
+                      <li><a href="/help" className="hover:text-green-400 transition-colors">Help Center</a></li>
+                      <li><Link href="/community" className="hover:text-green-400 transition-colors">Community Forum</Link></li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold mb-4">Company</h4>
+                    <ul className={`space-y-2 text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                      <li><a href="/about" className="hover:text-green-400 transition-colors">About Us</a></li>
+                      <li><a href="/blog" className="hover:text-green-400 transition-colors">Blog</a></li>
+                      <li><a href="/careers" className="hover:text-green-400 transition-colors">Careers</a></li>
+                      <li><Link href="/settings" className="hover:text-green-400 transition-colors">Settings</Link></li>
+                    </ul>
+                    <p className={`text-xs mt-4 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}`}>
+                      Built for Forte Hacks 2025
+                    </p>
+                  </div>
                </div>
-              <div className={`border-t ${darkMode ? 'border-white/10' : 'border-gray-200'} mt-8 pt-8 text-center`}>
-                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+               <div className={`border-t ${theme === 'dark' ? 'border-white/10' : 'border-gray-200'} mt-8 pt-8 text-center`}>
+                 <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
                   © 2025 FlowFi. All rights reserved. | Powered by Flow Blockchain & Forte
                 </p>
           </div>
@@ -377,11 +379,23 @@ export default function RootLayout({
           />
         </>
       )}
-            </WalletProvider>
-            <ToastContainer />
-          </ToastProvider>
-        </ThemeProvider>
-      </body>
-    </html>
+             </WalletProvider>
+             <ToastContainer />
+           </ToastProvider>
+         </ThemeProvider>
+       </body>
+     </html>
+   );
+ }
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <ThemeProvider>
+      <LayoutContent>{children}</LayoutContent>
+    </ThemeProvider>
   );
 }
