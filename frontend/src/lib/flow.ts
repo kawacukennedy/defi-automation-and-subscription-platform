@@ -40,9 +40,9 @@ export const executeTransaction = async (cadence: string, args: any[] = []) => {
     const transactionId = await fcl.mutate({
       cadence,
       args: (arg, t) => args,
-      payer: fcl.authz,
-      proposer: fcl.authz,
-      authorizations: [fcl.authz],
+      payer: fcl.authz as any,
+      proposer: fcl.authz as any,
+      authorizations: [fcl.authz as any],
       limit: 999
     });
 
