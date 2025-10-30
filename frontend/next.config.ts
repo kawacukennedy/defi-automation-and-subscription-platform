@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Disable Turbopack to use Webpack
+  turbopack: false,
+
   // Enable experimental features for better performance
   experimental: {
     optimizeCss: true,
@@ -10,7 +13,24 @@ const nextConfig: NextConfig = {
 
   // Image optimization
   images: {
-    domains: ['assets.vercel.com', 'flow.com', 'quicknode.com', 'moonpay.com'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'assets.vercel.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'flow.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'quicknode.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'moonpay.com',
+      },
+    ],
     formats: ['image/webp', 'image/avif'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
@@ -149,11 +169,6 @@ const nextConfig: NextConfig = {
   // TypeScript strict mode
   typescript: {
     tsconfigPath: './tsconfig.json',
-  },
-
-  // ESLint configuration
-  eslint: {
-    ignoreDuringBuilds: false,
   },
 
   // Output configuration for Vercel
