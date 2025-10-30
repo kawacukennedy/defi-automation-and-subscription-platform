@@ -12,6 +12,8 @@ import Loading from "@/components/Loading";
 import { ThemeProvider } from "@/lib/ThemeContext";
 import { ToastProvider } from "@/lib/ToastContext";
 import ThemeToggle from "@/components/ThemeToggle";
+import SearchBar from "@/components/SearchBar";
+import { useState } from "react";
 import ToastContainer from "@/components/ToastContainer";
 
 // Lazy load heavy components
@@ -114,7 +116,15 @@ export default function RootLayout({
         <link rel="preconnect" href="https://access-testnet.onflow.org" />
         <link rel="dns-prefetch" href="//access-testnet.onflow.org" />
       </head>
-       <body
+       {/* Skip to main content link for accessibility */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-green-500 text-white px-4 py-2 rounded-lg z-50"
+      >
+        Skip to main content
+      </a>
+
+      <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased transition-colors duration-300 bg-gradient-to-br from-blue-900 via-purple-900 to-green-900 text-white`}
       >
         <ThemeProvider>
@@ -136,17 +146,59 @@ export default function RootLayout({
               </Link>
               <div className="flex items-center space-x-6">
                 <div className="hidden md:flex space-x-4">
-                  <Link href="/dashboard" className={`hover:text-green-400 transition-colors ${darkMode ? 'text-white' : 'text-gray-900'}`}>Dashboard</Link>
-                  <Link href="/create-workflow" className={`hover:text-green-400 transition-colors ${darkMode ? 'text-white' : 'text-gray-900'}`}>Create Workflow</Link>
-                  <Link href="/analytics" className={`hover:text-green-400 transition-colors ${darkMode ? 'text-white' : 'text-gray-900'}`}>Analytics</Link>
-                  <Link href="/community" className={`hover:text-green-400 transition-colors ${darkMode ? 'text-white' : 'text-gray-900'}`}>Community</Link>
-                  <Link href="/leaderboard" className={`hover:text-green-400 transition-colors ${darkMode ? 'text-white' : 'text-gray-900'}`}>Leaderboard</Link>
-                  <Link href="/settings" className={`hover:text-green-400 transition-colors ${darkMode ? 'text-white' : 'text-gray-900'}`}>Settings</Link>
-                  <Link href="/admin" className={`hover:text-green-400 transition-colors ${darkMode ? 'text-white' : 'text-gray-900'}`}>Admin</Link>
+                   <Link href="/dashboard" className={`hover:text-green-400 transition-colors ${darkMode ? 'text-white' : 'text-gray-900'}`}>Dashboard</Link>
+                   <Link href="/create-workflow" className={`hover:text-green-400 transition-colors ${darkMode ? 'text-white' : 'text-gray-900'}`}>Create Workflow</Link>
+                   <Link href="/analytics" className={`hover:text-green-400 transition-colors ${darkMode ? 'text-white' : 'text-gray-900'}`}>Analytics</Link>
+                   <Link href="/community" className={`hover:text-green-400 transition-colors ${darkMode ? 'text-white' : 'text-gray-900'}`}>Community</Link>
+                   <Link href="/leaderboard" className={`hover:text-green-400 transition-colors ${darkMode ? 'text-white' : 'text-gray-900'}`}>Leaderboard</Link>
+                   <Link href="/settings" className={`hover:text-green-400 transition-colors ${darkMode ? 'text-white' : 'text-gray-900'}`}>Settings</Link>
+                   <Link href="/contact" className={`hover:text-green-400 transition-colors ${darkMode ? 'text-white' : 'text-gray-900'}`}>Contact</Link>
                 </div>
+
+                 {/* Search */}
+                <SearchBar />
 
                 {/* Theme Toggle */}
                 <ThemeToggle />
+
+                {/* Mobile Menu Button */}
+                <div className="md:hidden">
+                  <motion.button
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                    className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
+                    aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+                    aria-expanded={mobileMenuOpen}
+                  >
+                    <motion.div
+                      animate={mobileMenuOpen ? 'open' : 'closed'}
+                      className="w-6 h-5 relative"
+                      aria-hidden="true"
+                    >
+                      <motion.span
+                        variants={{
+                          closed: { rotate: 0, y: 0 },
+                          open: { rotate: 45, y: 8 }
+                        }}
+                        className="absolute top-0 left-0 w-6 h-0.5 bg-current block transform origin-center transition-all duration-300"
+                      />
+                      <motion.span
+                        variants={{
+                          closed: { opacity: 1 },
+                          open: { opacity: 0 }
+                        }}
+                        className="absolute top-2 left-0 w-6 h-0.5 bg-current block transform origin-center transition-all duration-300"
+                      />
+                      <motion.span
+                        variants={{
+                          closed: { rotate: 0, y: 0 },
+                          open: { rotate: -45, y: -8 }
+                        }}
+                        className="absolute top-4 left-0 w-6 h-0.5 bg-current block transform origin-center transition-all duration-300"
+                      />
+                    </motion.div>
+                  </motion.button>
+                </div>
                  </div>
               </div>
             </div>
@@ -185,15 +237,15 @@ export default function RootLayout({
                  </motion.button>
                </div>
                <nav className="space-y-4">
-                 {[
-                   { href: '/dashboard', label: 'Dashboard' },
-                   { href: '/create-workflow', label: 'Create Workflow' },
-                   { href: '/analytics', label: 'Analytics' },
-                   { href: '/community', label: 'Community' },
-                   { href: '/leaderboard', label: 'Leaderboard' },
-                   { href: '/settings', label: 'Settings' },
-                   { href: '/admin', label: 'Admin' }
-                 ].map((item) => (
+                  {[
+                    { href: '/dashboard', label: 'Dashboard' },
+                    { href: '/create-workflow', label: 'Create Workflow' },
+                    { href: '/analytics', label: 'Analytics' },
+                    { href: '/community', label: 'Community' },
+                    { href: '/leaderboard', label: 'Leaderboard' },
+                    { href: '/settings', label: 'Settings' },
+                    { href: '/contact', label: 'Contact' },
+                  ].map((item) => (
                    <Link
                      key={item.href}
                      href={item.href}
@@ -216,7 +268,7 @@ export default function RootLayout({
            </motion.div>
 
            {/* Main Content */}
-          <main className="min-h-screen">
+           <main id="main-content" className="min-h-screen">
             <ErrorBoundary>
               {children}
             </ErrorBoundary>

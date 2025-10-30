@@ -218,21 +218,41 @@ export default function Home() {
               desc: 'Earn badges for milestones, compete on leaderboards, and share templates.',
               color: 'from-purple-400 to-purple-600'
             }
-          ].map((feature, index) => (
-            <motion.div
-              key={feature.title}
-              initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: index * 0.2 }}
-              viewport={{ once: true }}
-              whileHover={{ scale: 1.05, y: -10 }}
-              className={`bg-black/20 backdrop-blur-md border border-white/10 p-8 rounded-2xl hover:border-white/20 transition-all duration-300 bg-gradient-to-br ${feature.color} bg-opacity-10`}
-            >
-              <div className="text-5xl mb-4">{feature.icon}</div>
-              <h3 className="text-2xl font-semibold mb-4">{feature.title}</h3>
-              <p className="text-gray-300 leading-relaxed">{feature.desc}</p>
-            </motion.div>
-          ))}
+           ].map((feature, index) => (
+             <motion.div
+               key={feature.title}
+               initial={{ opacity: 0, y: 50 }}
+               whileInView={{ opacity: 1, y: 0 }}
+               transition={{ duration: 0.6, delay: index * 0.2 }}
+               viewport={{ once: true }}
+               whileHover={{
+                 scale: 1.05,
+                 boxShadow: '0 0 30px rgba(0,255,0,0.4)',
+                 y: -5
+               }}
+               className={`bg-black/20 backdrop-blur-md border border-white/10 p-8 rounded-2xl hover:border-white/20 transition-all duration-500 bg-gradient-to-br ${feature.color} bg-opacity-10 cursor-pointer group`}
+             >
+               <motion.div
+                 className="text-5xl mb-4"
+                 whileHover={{ scale: 1.1, rotate: 5 }}
+                 transition={{ type: 'spring', stiffness: 400, damping: 10 }}
+               >
+                 {feature.icon}
+               </motion.div>
+               <motion.h3
+                 className="text-2xl font-semibold mb-4 group-hover:text-green-300 transition-colors"
+                 whileHover={{ x: 5 }}
+               >
+                 {feature.title}
+               </motion.h3>
+               <motion.p
+                 className="text-gray-300 leading-relaxed"
+                 whileHover={{ x: 3 }}
+               >
+                 {feature.desc}
+               </motion.p>
+             </motion.div>
+           ))}
         </div>
       </section>
 
@@ -274,28 +294,54 @@ export default function Home() {
           What Users Say
         </motion.h2>
         <div className="grid md:grid-cols-3 gap-8">
-          {testimonials.map((testimonial, index) => (
-            <motion.div
-              key={testimonial.name}
-              initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: index * 0.2 }}
-              viewport={{ once: true }}
-              whileHover={{ scale: 1.05 }}
-              className="bg-black/20 backdrop-blur-md border border-white/10 p-6 rounded-2xl"
-            >
-              <div className="flex items-center mb-4">
-                <div className="w-12 h-12 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center text-white font-bold mr-4">
-                  {testimonial.name.split(' ').map(n => n[0]).join('')}
-                </div>
-                <div>
-                  <h4 className="font-semibold">{testimonial.name}</h4>
-                  <p className="text-sm text-gray-400">{testimonial.role}</p>
-                </div>
-              </div>
-              <p className="text-gray-300 italic">"{testimonial.content}"</p>
-            </motion.div>
-          ))}
+           {testimonials.map((testimonial, index) => (
+             <motion.div
+               key={testimonial.name}
+               initial={{ opacity: 0, y: 50 }}
+               whileInView={{ opacity: 1, y: 0 }}
+               transition={{ duration: 0.6, delay: index * 0.2 }}
+               viewport={{ once: true }}
+               whileHover={{
+                 scale: 1.03,
+                 boxShadow: '0 0 25px rgba(0,255,0,0.2)',
+                 y: -3
+               }}
+               className="bg-black/20 backdrop-blur-md border border-white/10 p-6 rounded-2xl hover:border-green-400/30 transition-all duration-300 group"
+             >
+               <motion.div
+                 className="flex items-center mb-4"
+                 whileHover={{ x: 5 }}
+               >
+                 <motion.div
+                   className="w-12 h-12 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center text-white font-bold mr-4"
+                   whileHover={{ scale: 1.1, rotate: 10 }}
+                   transition={{ type: 'spring', stiffness: 400, damping: 10 }}
+                 >
+                   {testimonial.name.split(' ').map(n => n[0]).join('')}
+                 </motion.div>
+                 <div>
+                   <motion.h4
+                     className="font-semibold group-hover:text-green-300 transition-colors"
+                     whileHover={{ x: 3 }}
+                   >
+                     {testimonial.name}
+                   </motion.h4>
+                   <motion.p
+                     className="text-sm text-gray-400"
+                     whileHover={{ x: 2 }}
+                   >
+                     {testimonial.role}
+                   </motion.p>
+                 </div>
+               </motion.div>
+               <motion.p
+                 className="text-gray-300 italic group-hover:text-white transition-colors"
+                 whileHover={{ x: 5 }}
+               >
+                 "{testimonial.content}"
+               </motion.p>
+             </motion.div>
+           ))}
         </div>
       </section>
 
@@ -310,18 +356,28 @@ export default function Home() {
         >
           <h2 className="text-2xl font-bold mb-8 text-gray-300">Trusted by Leading Web3 Projects</h2>
           <div className="flex flex-wrap justify-center items-center gap-8 opacity-60">
-            {partners.map((partner, index) => (
-              <motion.div
-                key={partner}
-                initial={{ opacity: 0, scale: 0.8 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.4, delay: index * 0.1 }}
-                viewport={{ once: true }}
-                className="bg-white/10 backdrop-blur-md px-6 py-3 rounded-lg border border-white/20"
-              >
-                <span className="font-semibold text-lg">{partner}</span>
-              </motion.div>
-            ))}
+             {partners.map((partner, index) => (
+               <motion.div
+                 key={partner}
+                 initial={{ opacity: 0, scale: 0.8 }}
+                 whileInView={{ opacity: 1, scale: 1 }}
+                 transition={{ duration: 0.4, delay: index * 0.1 }}
+                 viewport={{ once: true }}
+                 whileHover={{
+                   scale: 1.05,
+                   boxShadow: '0 0 15px rgba(255,255,255,0.2)',
+                   y: -2
+                 }}
+                 className="bg-white/10 backdrop-blur-md px-6 py-3 rounded-lg border border-white/20 hover:border-white/40 transition-all duration-300 cursor-pointer group"
+               >
+                 <motion.span
+                   className="font-semibold text-lg group-hover:text-green-300 transition-colors"
+                   whileHover={{ scale: 1.05 }}
+                 >
+                   {partner}
+                 </motion.span>
+               </motion.div>
+             ))}
           </div>
         </motion.div>
       </section>

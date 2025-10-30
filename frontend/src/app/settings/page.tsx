@@ -475,7 +475,7 @@ export default function Settings() {
             className="lg:w-80"
           >
             <div className="bg-black/20 backdrop-blur-md border border-white/10 rounded-xl p-6">
-              <nav className="space-y-2">
+              <nav className="space-y-2" role="tablist" aria-label="Settings navigation">
                 {tabs.map((tab) => (
                   <motion.button
                     key={tab.id}
@@ -487,8 +487,12 @@ export default function Settings() {
                         ? 'bg-gradient-to-r from-green-500/20 to-blue-500/20 border border-green-400/30'
                         : 'hover:bg-white/5'
                     }`}
+                    role="tab"
+                    aria-selected={activeTab === tab.id}
+                    aria-controls={`panel-${tab.id}`}
+                    id={`tab-${tab.id}`}
                   >
-                    <span className="text-xl">{tab.icon}</span>
+                    <span className="text-xl" aria-hidden="true">{tab.icon}</span>
                     <span className="font-medium">{tab.label}</span>
                   </motion.button>
                 ))}
@@ -512,6 +516,9 @@ export default function Settings() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.4 }}
             className="flex-1"
+            role="tabpanel"
+            aria-labelledby={`tab-${activeTab}`}
+            id={`panel-${activeTab}`}
           >
             {renderTabContent()}
           </motion.main>
