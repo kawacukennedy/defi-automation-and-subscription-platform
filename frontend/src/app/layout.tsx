@@ -1,6 +1,5 @@
 'use client';
 
-import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { WalletProvider } from "@/lib/WalletContext";
@@ -35,61 +34,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "FlowFi - DeFi Automation & Subscription Platform",
-  description: "Automate DeFi actions, recurring crypto payments, staking, swaps, NFT rewards, DAO governance on Flow blockchain",
-  keywords: ["DeFi", "Flow", "Blockchain", "Automation", "Crypto", "NFT", "DAO", "Web3"],
-  authors: [{ name: "FlowFi Team" }],
-  creator: "FlowFi",
-  publisher: "FlowFi",
-  formatDetection: {
-    email: false,
-    address: false,
-    telephone: false,
-  },
-  metadataBase: new URL('https://flowfi.vercel.app'),
-  alternates: {
-    canonical: '/',
-  },
-  openGraph: {
-    title: "FlowFi - DeFi Automation Platform",
-    description: "Automate your DeFi workflows on Flow blockchain with AI-powered insights",
-    url: 'https://flowfi.vercel.app',
-    siteName: 'FlowFi',
-    images: [
-      {
-        url: '/og-image.png',
-        width: 1200,
-        height: 630,
-        alt: 'FlowFi - DeFi Automation Platform',
-      },
-    ],
-    locale: 'en_US',
-    type: 'website',
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: "FlowFi - DeFi Automation Platform",
-    description: "Automate your DeFi workflows on Flow blockchain",
-    images: ['/og-image.png'],
-    creator: '@flowfi',
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
-    },
-  },
-  verification: {
-    google: 'your-google-site-verification',
-  },
-  category: 'finance',
-};
+
 
 export default function RootLayout({
   children,
@@ -123,12 +68,14 @@ export default function RootLayout({
   return (
     <html lang="en" className={darkMode ? 'dark' : ''}>
       <head>
+        <title>FlowFi - DeFi Automation & Subscription Platform</title>
         {/* PWA Meta Tags */}
         <meta name="application-name" content="FlowFi" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="FlowFi" />
         <meta name="description" content="Automate DeFi actions, recurring crypto payments, staking, swaps, NFT rewards, DAO governance on Flow blockchain" />
+        <meta name="keywords" content="DeFi, Flow, Blockchain, Automation, Crypto, NFT, DAO, Web3" />
         <meta name="format-detection" content="telephone=no" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="msapplication-config" content="/browserconfig.xml" />
