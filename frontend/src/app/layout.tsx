@@ -9,6 +9,10 @@ import dynamic from 'next/dynamic';
 import { motion } from 'framer-motion';
 import ErrorBoundary from "@/components/ErrorBoundary";
 import Loading from "@/components/Loading";
+import { ThemeProvider } from "@/lib/ThemeContext";
+import { ToastProvider } from "@/lib/ToastContext";
+import ThemeToggle from "@/components/ThemeToggle";
+import ToastContainer from "@/components/ToastContainer";
 
 // Lazy load heavy components
 const MotionDiv = dynamic(() => import('framer-motion').then(mod => ({ default: mod.motion.div })), {
@@ -48,7 +52,6 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [darkMode, setDarkMode] = useState(true);
   const [notifications, setNotifications] = useState([
     { id: 1, message: 'Workflow "Staking" executed successfully', time: '2 min ago', unread: true },
     { id: 2, message: 'New achievement unlocked: "Early Adopter"', time: '1 hour ago', unread: true },
@@ -57,19 +60,7 @@ export default function RootLayout({
   const [showNotifications, setShowNotifications] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme) {
-      setDarkMode(savedTheme === 'dark');
-    }
-  }, []);
 
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark', darkMode);
-    localStorage.setItem('theme', darkMode ? 'dark' : 'light');
-  }, [darkMode]);
-
-  const toggleTheme = () => setDarkMode(!darkMode);
 
   const unreadCount = notifications.filter(n => n.unread).length;
 
@@ -123,12 +114,12 @@ export default function RootLayout({
         <link rel="preconnect" href="https://access-testnet.onflow.org" />
         <link rel="dns-prefetch" href="//access-testnet.onflow.org" />
       </head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased transition-colors duration-300 ${
-          darkMode ? 'bg-gradient-to-br from-blue-900 via-purple-900 to-green-900 text-white' : 'bg-gradient-to-br from-green-50 to-blue-50 text-gray-900'
-        }`}
+       <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased transition-colors duration-300 bg-gradient-to-br from-blue-900 via-purple-900 to-green-900 text-white`}
       >
-        <WalletProvider>
+        <ThemeProvider>
+          <ToastProvider>
+            <WalletProvider>
           {/* Navigation */}
           <Suspense fallback={<nav className="p-4 bg-gray-100 animate-pulse">Loading navigation...</nav>}>
             <MotionNav
@@ -155,104 +146,7 @@ export default function RootLayout({
                 </div>
 
                 {/* Theme Toggle */}
-                <MotionButton
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={toggleTheme}
-                  className={`p-2 rounded-lg transition-colors ${
-                    darkMode ? 'bg-white/10 hover:bg-white/20' : 'bg-black/10 hover:bg-black/20'
-                  }`}
-                >
-                  {darkMode ? '☀️' : '🌙'}
-                </MotionButton>
-
-                {/* Notifications */}
-                <div className="relative">
-                  <MotionButton
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => setShowNotifications(!showNotifications)}
-                    className={`p-2 rounded-lg transition-colors relative ${
-                      darkMode ? 'bg-white/10 hover:bg-white/20' : 'bg-black/10 hover:bg-black/20'
-                    }`}
-                  >
-                    🔔
-                    {unreadCount > 0 && (
-                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                        {unreadCount}
-                      </span>
-                    )}
-                  </MotionButton>
-
-                  {/* Notifications Dropdown */}
-                  {showNotifications && (
-                    <MotionDiv
-                      initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                      className={`absolute right-0 mt-2 w-80 ${
-                        darkMode ? 'bg-black/90 backdrop-blur-md border-white/10' : 'bg-white/90 backdrop-blur-md border-gray-200'
-                      } border rounded-xl shadow-xl z-50`}
-                    >
-                      <div className={`p-4 border-b ${darkMode ? 'border-white/10' : 'border-gray-200'}`}>
-                        <h3 className="font-semibold">Notifications</h3>
-                      </div>
-                      <div className="max-h-64 overflow-y-auto">
-                        {notifications.map((notification) => (
-                          <div
-                            key={notification.id}
-                            className={`p-4 border-b ${darkMode ? 'border-white/10' : 'border-gray-200'} hover:bg-white/10 transition-colors cursor-pointer`}
-                          >
-                            <p className={`text-sm ${notification.unread ? 'font-semibold' : ''}`}>
-                              {notification.message}
-                            </p>
-                            <p className="text-xs text-gray-500 mt-1">{notification.time}</p>
-                          </div>
-                        ))}
-                      </div>
-                      <div className="p-4 text-center">
-                        <button className="text-green-400 hover:text-green-300 text-sm font-medium">
-                          View All Notifications
-                        </button>
-                      </div>
-                    </MotionDiv>
-                  )}
-                </div>
-
-                 {/* Mobile Menu */}
-                 <div className="md:hidden">
-                   <motion.button
-                     whileTap={{ scale: 0.9 }}
-                     onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                     className={`p-2 rounded-lg ${darkMode ? 'bg-white/10' : 'bg-black/10'}`}
-                   >
-                     <motion.div
-                       animate={mobileMenuOpen ? 'open' : 'closed'}
-                       className="w-6 h-5 relative"
-                     >
-                       <motion.span
-                         variants={{
-                           closed: { rotate: 0, y: 0 },
-                           open: { rotate: 45, y: 8 }
-                         }}
-                         className="absolute top-0 left-0 w-6 h-0.5 bg-current block transform origin-center transition-all duration-300"
-                       />
-                       <motion.span
-                         variants={{
-                           closed: { opacity: 1 },
-                           open: { opacity: 0 }
-                         }}
-                         className="absolute top-2 left-0 w-6 h-0.5 bg-current block transform origin-center transition-all duration-300"
-                       />
-                       <motion.span
-                         variants={{
-                           closed: { rotate: 0, y: 0 },
-                           open: { rotate: -45, y: -8 }
-                         }}
-                         className="absolute top-4 left-0 w-6 h-0.5 bg-current block transform origin-center transition-all duration-300"
-                       />
-                     </motion.div>
-                   </motion.button>
+                <ThemeToggle />
                  </div>
               </div>
             </div>
@@ -312,18 +206,12 @@ export default function RootLayout({
                    </Link>
                  ))}
                </nav>
-               <div className="mt-8 pt-8 border-t border-white/10">
-                 <div className="flex items-center justify-between">
-                   <span className="text-sm text-gray-400">Theme</span>
-                   <motion.button
-                     whileTap={{ scale: 0.9 }}
-                     onClick={toggleTheme}
-                     className="p-2 rounded-lg bg-white/10"
-                   >
-                     {darkMode ? '☀️' : '🌙'}
-                   </motion.button>
+                 <div className="mt-8 pt-8 border-t border-white/10">
+                   <div className="flex items-center justify-between">
+                     <span className="text-sm text-gray-400">Theme</span>
+                     <ThemeToggle />
+                   </div>
                  </div>
-               </div>
              </div>
            </motion.div>
 
@@ -437,7 +325,10 @@ export default function RootLayout({
           />
         </>
       )}
-        </WalletProvider>
+            </WalletProvider>
+            <ToastContainer />
+          </ToastProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
