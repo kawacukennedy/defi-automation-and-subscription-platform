@@ -6,6 +6,7 @@ import { WalletProvider } from "@/lib/WalletContext";
 import Link from "next/link";
 import { useState, useEffect, Suspense } from "react";
 import dynamic from 'next/dynamic';
+import { motion } from 'framer-motion';
 import ErrorBoundary from "@/components/ErrorBoundary";
 
 // Lazy load heavy components
@@ -22,6 +23,11 @@ const MotionNav = dynamic(() => import('framer-motion').then(mod => ({ default: 
 const MotionFooter = dynamic(() => import('framer-motion').then(mod => ({ default: mod.motion.footer })), {
   ssr: false,
   loading: () => <footer className="py-12 bg-gray-100">Loading footer...</footer>
+});
+
+const MotionButton = dynamic(() => import('framer-motion').then(mod => ({ default: mod.motion.button })), {
+  ssr: false,
+  loading: () => <button className="p-2 rounded-lg">Loading...</button>
 });
 
 const geistSans = Geist({
@@ -134,7 +140,7 @@ export default function RootLayout({
                 </div>
 
                 {/* Theme Toggle */}
-                <motion.button
+                <MotionButton
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={toggleTheme}
@@ -143,11 +149,11 @@ export default function RootLayout({
                   }`}
                 >
                   {darkMode ? '☀️' : '🌙'}
-                </motion.button>
+                </MotionButton>
 
                 {/* Notifications */}
                 <div className="relative">
-                  <motion.button
+                  <MotionButton
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
                     onClick={() => setShowNotifications(!showNotifications)}
@@ -161,11 +167,11 @@ export default function RootLayout({
                         {unreadCount}
                       </span>
                     )}
-                  </motion.button>
+                  </MotionButton>
 
                   {/* Notifications Dropdown */}
                   {showNotifications && (
-                    <motion.div
+                    <MotionDiv
                       initial={{ opacity: 0, y: -10, scale: 0.95 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: -10, scale: 0.95 }}
@@ -194,7 +200,7 @@ export default function RootLayout({
                           View All Notifications
                         </button>
                       </div>
-                    </motion.div>
+                    </MotionDiv>
                   )}
                 </div>
 
