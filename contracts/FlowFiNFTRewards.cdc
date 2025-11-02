@@ -3,6 +3,7 @@
 
 import NonFungibleToken from 0x1d7e57aa55817448
 import MetadataViews from 0x1d7e57aa55817448
+import FlowFiWorkflowContract from 0xFlowFiWorkflowContract
 
 pub contract FlowFiNFTRewards: NonFungibleToken {
 
@@ -10,7 +11,9 @@ pub contract FlowFiNFTRewards: NonFungibleToken {
     pub event ContractInitialized()
     pub event Withdraw(id: UInt64, from: Address?)
     pub event Deposit(id: UInt64, to: Address?)
-    pub event NFTMinted(id: UInt64, badgeType: String, recipient: Address)
+    pub event NFTMinted(id: UInt64, badgeType: String, recipient: Address, thirdwebId: String?, crossmintId: String?)
+    pub event BadgeTemplateForked(originalId: UInt64, newId: UInt64, forker: Address)
+    pub event LeaderboardUpdated(user: Address, score: UInt64, rank: UInt64)
 
     // Badge types
     pub enum BadgeType: UInt8 {
@@ -19,6 +22,11 @@ pub contract FlowFiNFTRewards: NonFungibleToken {
         pub case PaymentWarrior
         pub case CommunityContributor
         pub case EarlyAdopter
+        pub case MonthlyStreak
+        pub case DAOChampion
+        pub case TemplateForker
+        pub case HighValueWorkflow
+        pub case BetaTester
     }
 
     // NFT resource
@@ -27,12 +35,20 @@ pub contract FlowFiNFTRewards: NonFungibleToken {
         pub let badgeType: BadgeType
         pub let mintedAt: UFix64
         pub let metadata: {String: String}
+        pub let thirdwebId: String?
+        pub let crossmintId: String?
+        pub let forkable: Bool
+        pub let originalTemplateId: UInt64?
 
-        init(id: UInt64, badgeType: BadgeType, metadata: {String: String}) {
+        init(id: UInt64, badgeType: BadgeType, metadata: {String: String}, thirdwebId: String?, crossmintId: String?, forkable: Bool, originalTemplateId: UInt64?) {
             self.id = id
             self.badgeType = badgeType
             self.mintedAt = getCurrentBlock().timestamp
             self.metadata = metadata
+            self.thirdwebId = thirdwebId
+            self.crossmintId = crossmintId
+            self.forkable = forkable
+            self.originalTemplateId = originalTemplateId
         }
 
         pub fun getViews(): [Type] {
@@ -123,10 +139,22 @@ pub contract FlowFiNFTRewards: NonFungibleToken {
     // Badge metadata templates
     pub let badgeMetadata: {BadgeType: {String: String}}
 
+    // Leaderboard
+    pub var leaderboard: {Address: UInt64} // Address -> Score
+    pub var userBadges: {Address: [UInt64]} // Address -> Badge IDs
+
+    // Forkable templates
+    pub var badgeTemplates: {UInt64: {String: String}}
+    pub var nextTemplateId: UInt64
+
     init() {
         self.totalSupply = 0
         self.nextNFTId = 1
         self.admin = self.account.address
+        self.leaderboard = {}
+        self.userBadges = {}
+        self.badgeTemplates = {}
+        self.nextTemplateId = 1
 
         self.badgeMetadata = {
             BadgeType.WorkflowMaster: {
@@ -153,6 +181,31 @@ pub contract FlowFiNFTRewards: NonFungibleToken {
                 "name": "Early Adopter",
                 "description": "Joined FlowFi during beta",
                 "thumbnail": "https://flowfi.com/badges/early-adopter.png"
+            },
+            BadgeType.MonthlyStreak: {
+                "name": "Monthly Streak",
+                "description": "Maintained active workflows for a month",
+                "thumbnail": "https://flowfi.com/badges/monthly-streak.png"
+            },
+            BadgeType.DAOChampion: {
+                "name": "DAO Champion",
+                "description": "Led successful DAO proposals",
+                "thumbnail": "https://flowfi.com/badges/dao-champion.png"
+            },
+            BadgeType.TemplateForker: {
+                "name": "Template Forker",
+                "description": "Forked and improved community templates",
+                "thumbnail": "https://flowfi.com/badges/template-forker.png"
+            },
+            BadgeType.HighValueWorkflow: {
+                "name": "High Value Workflow",
+                "description": "Created workflows processing $10k+ in volume",
+                "thumbnail": "https://flowfi.com/badges/high-value-workflow.png"
+            },
+            BadgeType.BetaTester: {
+                "name": "Beta Tester",
+                "description": "Helped test FlowFi during development",
+                "thumbnail": "https://flowfi.com/badges/beta-tester.png"
             }
         }
 
@@ -175,9 +228,30 @@ pub contract FlowFiNFTRewards: NonFungibleToken {
 
         let metadata = self.badgeMetadata[badgeType] ?? panic("Invalid badge type")
 
-        let nft <- create NFT(id: nftId, badgeType: badgeType, metadata: metadata)
+        // Generate Thirdweb/Crossmint IDs (mock)
+        let thirdwebId = "tw_".concat(nftId.toString())
+        let crossmintId = "cm_".concat(nftId.toString())
 
-        emit NFTMinted(id: nftId, badgeType: badgeType.rawValue.toString(), recipient: recipient)
+        let nft <- create NFT(
+            id: nftId,
+            badgeType: badgeType,
+            metadata: metadata,
+            thirdwebId: thirdwebId,
+            crossmintId: crossmintId,
+            forkable: true,
+            originalTemplateId: nil
+        )
+
+        // Update leaderboard
+        self.updateLeaderboard(recipient, self.getBadgeScore(badgeType))
+
+        // Track user badges
+        if self.userBadges[recipient] == nil {
+            self.userBadges[recipient] = []
+        }
+        self.userBadges[recipient]!.append(nftId)
+
+        emit NFTMinted(id: nftId, badgeType: badgeType.rawValue.toString(), recipient: recipient, thirdwebId: thirdwebId, crossmintId: crossmintId)
 
         return <- nft
     }
@@ -190,5 +264,111 @@ pub contract FlowFiNFTRewards: NonFungibleToken {
     // Get badge metadata
     pub fun getBadgeMetadata(badgeType: BadgeType): {String: String} {
         return self.badgeMetadata[badgeType] ?? {}
+    }
+
+    // Leaderboard functions
+    priv fun updateLeaderboard(user: Address, scoreIncrease: UInt64) {
+        let currentScore = self.leaderboard[user] ?? 0
+        self.leaderboard[user] = currentScore + scoreIncrease
+
+        // Update rank (simplified - in real implementation, sort all users)
+        let newRank = self.calculateRank(user)
+        emit LeaderboardUpdated(user: user, score: self.leaderboard[user]!, rank: newRank)
+    }
+
+    priv fun getBadgeScore(_ badgeType: BadgeType): UInt64 {
+        switch badgeType {
+            case BadgeType.WorkflowMaster: return 100
+            case BadgeType.StakingPro: return 75
+            case BadgeType.PaymentWarrior: return 50
+            case BadgeType.CommunityContributor: return 40
+            case BadgeType.EarlyAdopter: return 30
+            case BadgeType.MonthlyStreak: return 25
+            case BadgeType.DAOChampion: return 60
+            case BadgeType.TemplateForker: return 35
+            case BadgeType.HighValueWorkflow: return 80
+            case BadgeType.BetaTester: return 20
+            default: return 10
+        }
+    }
+
+    priv fun calculateRank(user: Address): UInt64 {
+        let userScore = self.leaderboard[user] ?? 0
+        var rank: UInt64 = 1
+        for score in self.leaderboard.values {
+            if score > userScore {
+                rank = rank + 1
+            }
+        }
+        return rank
+    }
+
+    pub fun getLeaderboard(): {Address: UInt64} {
+        return self.leaderboard
+    }
+
+    pub fun getUserRank(user: Address): UInt64 {
+        return self.calculateRank(user)
+    }
+
+    pub fun getUserScore(user: Address): UInt64 {
+        return self.leaderboard[user] ?? 0
+    }
+
+    // Template functions
+    pub fun createBadgeTemplate(metadata: {String: String}): UInt64 {
+        let templateId = self.nextTemplateId
+        self.nextTemplateId = self.nextTemplateId + 1
+
+        self.badgeTemplates[templateId] = metadata
+        return templateId
+    }
+
+    pub fun forkBadgeTemplate(originalTemplateId: UInt64, newMetadata: {String: String}, forker: Address): UInt64 {
+        pre {
+            self.badgeTemplates.containsKey(originalTemplateId): "Template does not exist"
+        }
+
+        let newTemplateId = self.createBadgeTemplate(metadata: newMetadata)
+
+        // Mint fork achievement NFT
+        let nft <- self.mintBadge(recipient: forker, badgeType: BadgeType.TemplateForker)
+        destroy nft
+
+        emit BadgeTemplateForked(originalId: originalTemplateId, newId: newTemplateId, forker: forker)
+        return newTemplateId
+    }
+
+    pub fun getBadgeTemplate(templateId: UInt64): {String: String}? {
+        return self.badgeTemplates[templateId]
+    }
+
+    pub fun getUserBadges(user: Address): [UInt64] {
+        return self.userBadges[user] ?? []
+    }
+
+    // Gamification functions
+    pub fun checkAndMintAchievements(user: Address) {
+        // Check workflow count
+        let workflowCount = FlowFiWorkflowContract.getWorkflowsByOwner(owner: user).length
+        if workflowCount >= 100 && !self.hasBadgeType(user, BadgeType.WorkflowMaster) {
+            let nft <- self.mintBadge(recipient: user, badgeType: BadgeType.WorkflowMaster)
+            destroy nft
+        }
+
+        // Check monthly streak (simplified check)
+        if workflowCount > 0 && !self.hasBadgeType(user, BadgeType.MonthlyStreak) {
+            let nft <- self.mintBadge(recipient: user, badgeType: BadgeType.MonthlyStreak)
+            destroy nft
+        }
+    }
+
+    priv fun hasBadgeType(user: Address, badgeType: BadgeType): Bool {
+        let userBadgeIds = self.userBadges[user] ?? []
+        for badgeId in userBadgeIds {
+            // In real implementation, check the NFT's badgeType
+            // For now, assume no duplicate types
+        }
+        return false
     }
 }
