@@ -1,11 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Turbopack configuration
-  turbopack: {},
-
   // Enable experimental features for better performance
   experimental: {
-    optimizeCss: true,
     scrollRestoration: true,
     optimizePackageImports: ['@onflow/fcl', 'framer-motion'],
   },
