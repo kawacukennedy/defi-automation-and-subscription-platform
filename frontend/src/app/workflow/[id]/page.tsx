@@ -16,7 +16,7 @@ export default function WorkflowDetail() {
     }
   }, [params.id]);
 
-  const fetchWorkflowDetail = async (id) => {
+  const fetchWorkflowDetail = async (id: string) => {
     try {
       const mockWorkflow = {
         id,
