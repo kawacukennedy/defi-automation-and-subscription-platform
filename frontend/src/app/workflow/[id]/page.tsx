@@ -136,12 +136,7 @@ export default function WorkflowDetail() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-green-900 text-white">
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5 }}
-        className="container mx-auto px-4 py-8"
-      >
+      <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <motion.div
           initial={{ y: -50, opacity: 0 }}
@@ -363,7 +358,7 @@ export default function WorkflowDetail() {
             ))}
           </div>
         </motion.div>
-      </motion.div>
+      </div>
     </div>
   );
 }
