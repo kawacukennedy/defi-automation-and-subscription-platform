@@ -7,6 +7,8 @@ import { useWallet } from '@/lib/WalletContext';
 import { useToast } from '@/lib/ToastContext';
 import Loading from '@/components/Loading';
 
+export const dynamic = 'force-dynamic';
+
 type Step = 'action' | 'details' | 'triggers' | 'review';
 
 export default function CreateWorkflow() {

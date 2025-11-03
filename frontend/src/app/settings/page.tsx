@@ -7,6 +7,8 @@ import { useTheme } from '@/lib/ThemeContext';
 import { useToast } from '@/lib/ToastContext';
 import Loading from '@/components/Loading';
 
+export const dynamic = 'force-dynamic';
+
 interface NotificationSettings {
   workflowExecutions: boolean;
   paymentReminders: boolean;

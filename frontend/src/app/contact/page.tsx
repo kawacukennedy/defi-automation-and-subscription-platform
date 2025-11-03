@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/lib/ToastContext';
 import Loading from '@/components/Loading';
 
+export const dynamic = 'force-dynamic';
+
 interface ContactForm {
   name: string;
   email: string;

@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 
+export const dynamic = 'force-dynamic';
+
 interface LeaderboardUser {
   address: string;
   username?: string;

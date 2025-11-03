@@ -6,6 +6,8 @@ import { motion } from 'framer-motion';
 import { useWallet } from '@/lib/WalletContext';
 import Loading from '@/components/Loading';
 
+export const dynamic = 'force-dynamic';
+
 interface Workflow {
   workflowId: string;
   name: string;

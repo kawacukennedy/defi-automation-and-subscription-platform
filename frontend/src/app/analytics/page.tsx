@@ -3,6 +3,9 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useWallet } from '@/lib/WalletContext';
+
+export const dynamic = 'force-dynamic';
+
 import {
   LineChart,
   Line,

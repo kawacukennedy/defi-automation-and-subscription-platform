@@ -6,6 +6,8 @@ import { useWallet } from '@/lib/WalletContext';
 import { useEffect, useState } from 'react';
 import WalletConnectModal from '@/components/WalletConnectModal';
 
+export const dynamic = 'force-dynamic';
+
 export default function Home() {
   const { connected, connectWallet } = useWallet();
   const [mounted, setMounted] = useState(false);

@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { FiSearch, FiFilter, FiGitBranch, FiThumbsUp, FiShare2, FiStar, FiTrendingUp } from 'react-icons/fi';
 
+export const dynamic = 'force-dynamic';
+
 export default function CommunityHub() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterAction, setFilterAction] = useState('all');
