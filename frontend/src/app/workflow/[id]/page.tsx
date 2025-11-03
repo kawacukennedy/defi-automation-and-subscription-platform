@@ -27,7 +27,7 @@ interface WorkflowDetail {
 export default function WorkflowDetail() {
   const params = useParams();
   const router = useRouter();
-  const [workflow, setWorkflow] = useState<WorkflowDetail | null>(null);
+  const [workflow, setWorkflow] = useState(null);
   const [loading, setLoading] = useState(true);
   const [action, setAction] = useState(null);
   const [countdown, setCountdown] = useState<string>('');
