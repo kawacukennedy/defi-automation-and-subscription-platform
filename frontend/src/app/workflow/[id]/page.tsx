@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import { FiCopy, FiGitBranch } from 'react-icons/fi';
 
 interface WorkflowDetail {
   id: string;
@@ -29,12 +30,37 @@ export default function WorkflowDetail() {
   const [workflow, setWorkflow] = useState<WorkflowDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [action, setAction] = useState<'pause' | 'resume' | 'cancel' | null>(null);
+  const [countdown, setCountdown] = useState<string>('');
 
   useEffect(() => {
     if (params.id) {
       fetchWorkflowDetail(params.id as string);
     }
   }, [params.id]);
+
+  // Countdown timer effect
+  useEffect(() => {
+    if (!workflow?.nextExecution) return;
+
+    const interval = setInterval(() => {
+      const now = new Date().getTime();
+      const nextExec = new Date(workflow.nextExecution!).getTime();
+      const distance = nextExec - now;
+
+      if (distance > 0) {
+        const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+        setCountdown(`${days}d ${hours}h ${minutes}m ${seconds}s`);
+      } else {
+        setCountdown('Executing...');
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [workflow?.nextExecution]);
 
   const fetchWorkflowDetail = async (id: string) => {
     try {
@@ -77,6 +103,12 @@ export default function WorkflowDetail() {
     // Mock share - in real app, generate shareable link
     navigator.clipboard.writeText(`https://flowfi.com/workflow/${workflow?.id}`);
     alert('Workflow link copied to clipboard!');
+  };
+
+  const forkWorkflow = () => {
+    // Mock fork - in real app, create a copy of the workflow
+    router.push('/create-workflow');
+    alert('Workflow forked! Redirecting to create page...');
   };
 
   if (loading) {
@@ -123,24 +155,34 @@ export default function WorkflowDetail() {
             </h1>
             <p className="text-gray-300 mt-2">Workflow ID: {workflow.id}</p>
           </div>
-          <div className="flex gap-3">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={shareWorkflow}
-              className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg transition-colors"
-            >
-              Share Template
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => router.push(`/workflow/${workflow.id}/edit`)}
-              className="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg transition-colors"
-            >
-              Edit
-            </motion.button>
-          </div>
+           <div className="flex gap-3">
+             <motion.button
+               whileHover={{ scale: 1.05 }}
+               whileTap={{ scale: 0.95 }}
+               onClick={shareWorkflow}
+               className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
+             >
+               <FiCopy className="w-4 h-4" />
+               Share Template
+             </motion.button>
+             <motion.button
+               whileHover={{ scale: 1.05 }}
+               whileTap={{ scale: 0.95 }}
+               onClick={forkWorkflow}
+               className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
+             >
+               <FiGitBranch className="w-4 h-4" />
+               Fork
+             </motion.button>
+             <motion.button
+               whileHover={{ scale: 1.05 }}
+               whileTap={{ scale: 0.95 }}
+               onClick={() => router.push(`/workflow/${workflow.id}/edit`)}
+               className="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg transition-colors"
+             >
+               Edit
+             </motion.button>
+           </div>
         </motion.div>
 
         {/* Status and Controls */}
@@ -209,22 +251,22 @@ export default function WorkflowDetail() {
               <div className="text-2xl font-bold text-blue-400">{workflow.frequency}</div>
               <div className="text-sm text-gray-400">Frequency</div>
             </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-purple-400">
-                {workflow.nextExecution ? new Date(workflow.nextExecution).toLocaleDateString() : 'N/A'}
-              </div>
-              <div className="text-sm text-gray-400">Next Execution</div>
-            </div>
+             <div className="text-center">
+               <div className="text-2xl font-bold text-purple-400">
+                 {countdown || (workflow.nextExecution ? new Date(workflow.nextExecution).toLocaleDateString() : 'N/A')}
+               </div>
+               <div className="text-sm text-gray-400">Next Execution</div>
+             </div>
           </div>
         </motion.div>
 
-        {/* Workflow Details */}
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.4 }}
-          className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8"
-        >
+         {/* Workflow Details */}
+         <motion.div
+           initial={{ y: 20, opacity: 0 }}
+           animate={{ y: 0, opacity: 1 }}
+           transition={{ duration: 0.6, delay: 0.4 }}
+           className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8"
+         >
           <div className="bg-black/20 backdrop-blur-md border border-white/10 p-6 rounded-xl">
             <h2 className="text-xl font-semibold mb-4 bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
               Configuration
@@ -249,18 +291,32 @@ export default function WorkflowDetail() {
             </div>
           </div>
 
-          <div className="bg-black/20 backdrop-blur-md border border-white/10 p-6 rounded-xl">
-            <h2 className="text-xl font-semibold mb-4 bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
-              NFT Badge Status
-            </h2>
-            <div className="text-center py-8">
-              <div className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full mx-auto mb-4 flex items-center justify-center">
-                <span className="text-2xl">🏆</span>
-              </div>
-              <p className="text-gray-400">Workflow Champion Badge</p>
-              <p className="text-sm text-gray-500 mt-2">Earned for 10+ successful executions</p>
-            </div>
-          </div>
+           <div className="bg-black/20 backdrop-blur-md border border-white/10 p-6 rounded-xl">
+             <h2 className="text-xl font-semibold mb-4 bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
+               Multi-sig Status
+             </h2>
+             <div className="text-center py-8">
+               <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-blue-500 rounded-full mx-auto mb-4 flex items-center justify-center">
+                 <span className="text-2xl">✅</span>
+               </div>
+               <p className="text-gray-400">Approved by 3/3 signers</p>
+               <p className="text-sm text-gray-500 mt-2">All required approvals received</p>
+             </div>
+           </div>
+
+           <div className="bg-black/20 backdrop-blur-md border border-white/10 p-6 rounded-xl">
+             <h2 className="text-xl font-semibold mb-4 bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
+               NFT Badge Status
+             </h2>
+             <div className="text-center py-8">
+               <div className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full mx-auto mb-4 flex items-center justify-center">
+                 <span className="text-2xl">🏆</span>
+               </div>
+               <p className="text-gray-400">Workflow Champion Badge</p>
+               <p className="text-sm text-gray-500 mt-2">Earned for 10+ successful executions</p>
+             </div>
+           </div>
+         </motion.div>
         </motion.div>
 
         {/* Execution Logs */}

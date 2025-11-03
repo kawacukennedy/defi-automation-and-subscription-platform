@@ -1,7 +1,37 @@
 const Notification = require('../models/Notification');
 const User = require('../models/User');
+const nodemailer = require('nodemailer');
+const TelegramBot = require('node-telegram-bot-api');
+const { Client, GatewayIntentBits } = require('discord.js');
+const axios = require('axios');
 
 class NotificationService {
+  constructor() {
+    // Initialize email transporter
+    this.emailTransporter = nodemailer.createTransporter({
+      host: process.env.SMTP_HOST || 'smtp.gmail.com',
+      port: process.env.SMTP_PORT || 587,
+      secure: false,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS
+      }
+    });
+
+    // Initialize Telegram bot
+    if (process.env.TELEGRAM_BOT_TOKEN) {
+      this.telegramBot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: false });
+    }
+
+    // Initialize Discord client
+    if (process.env.DISCORD_BOT_TOKEN) {
+      this.discordClient = new Client({
+        intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages]
+      });
+      this.discordClient.login(process.env.DISCORD_BOT_TOKEN);
+    }
+  }
+
   async createNotification(notificationData) {
     try {
       const notification = new Notification(notificationData);
@@ -113,31 +143,102 @@ class NotificationService {
   }
 
   async sendEmail(notification, user) {
-    // Placeholder for email service integration
-    console.log(`Sending email to ${user.email}: ${notification.title}`);
-    // Integration with services like SendGrid, Mailgun, etc.
+    if (!user.email || !this.emailTransporter) return;
+
+    const mailOptions = {
+      from: process.env.SMTP_FROM || 'noreply@flowfi.com',
+      to: user.email,
+      subject: notification.title,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #00EF8B;">${notification.title}</h2>
+          <p>${notification.message}</p>
+          ${notification.data ? `<pre>${JSON.stringify(notification.data, null, 2)}</pre>` : ''}
+          <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+          <p style="color: #666; font-size: 12px;">
+            You're receiving this email because you have notifications enabled for FlowFi.<br>
+            <a href="${process.env.FRONTEND_URL}/settings">Manage your notification preferences</a>
+          </p>
+        </div>
+      `
+    };
+
+    await this.emailTransporter.sendMail(mailOptions);
   }
 
   async sendTelegram(notification, user) {
-    // Placeholder for Telegram bot integration
-    if (user.telegramId) {
-      console.log(`Sending Telegram message to ${user.telegramId}: ${notification.title}`);
-      // Integration with Telegram Bot API
-    }
+    if (!user.telegramId || !this.telegramBot) return;
+
+    const message = `
+🔔 *${notification.title}*
+
+${notification.message}
+
+${notification.data ? `\`\`\`\n${JSON.stringify(notification.data, null, 2)}\n\`\`\`` : ''}
+
+[View in FlowFi](${process.env.FRONTEND_URL}/dashboard)
+    `.trim();
+
+    await this.telegramBot.sendMessage(user.telegramId, message, {
+      parse_mode: 'Markdown',
+      disable_web_page_preview: true
+    });
   }
 
   async sendDiscord(notification, user) {
-    // Placeholder for Discord integration
-    if (user.discordId) {
-      console.log(`Sending Discord message to ${user.discordId}: ${notification.title}`);
-      // Integration with Discord webhooks or bot
-    }
+    if (!user.discordWebhook || !user.discordId) return;
+
+    const embed = {
+      title: notification.title,
+      description: notification.message,
+      color: notification.priority === 'high' ? 0xFF6B35 : notification.priority === 'medium' ? 0x00A3FF : 0x00EF8B,
+      fields: notification.data ? Object.entries(notification.data).map(([key, value]) => ({
+        name: key,
+        value: String(value),
+        inline: true
+      })) : [],
+      timestamp: new Date().toISOString(),
+      footer: {
+        text: 'FlowFi Notification',
+        icon_url: 'https://flowfi.com/favicon.ico'
+      }
+    };
+
+    await axios.post(user.discordWebhook, {
+      embeds: [embed],
+      content: user.discordId ? `<@${user.discordId}>` : undefined
+    });
   }
 
   async sendWebhook(notification, user) {
-    // Placeholder for webhook integration
-    console.log(`Sending webhook for user ${user.address}: ${notification.title}`);
-    // Send HTTP request to user's webhook URL
+    if (!user.webhookUrl) return;
+
+    const payload = {
+      event: notification.type,
+      title: notification.title,
+      message: notification.message,
+      data: notification.data,
+      userAddress: user.address,
+      timestamp: new Date().toISOString(),
+      priority: notification.priority
+    };
+
+    await axios.post(user.webhookUrl, payload, {
+      headers: {
+        'Content-Type': 'application/json',
+        'User-Agent': 'FlowFi-Webhook/1.0',
+        'X-FlowFi-Signature': this.generateWebhookSignature(payload)
+      },
+      timeout: 10000 // 10 second timeout
+    });
+  }
+
+  generateWebhookSignature(payload) {
+    // Simple signature generation - in production, use proper HMAC
+    const crypto = require('crypto');
+    return crypto.createHash('sha256')
+      .update(JSON.stringify(payload) + process.env.WEBHOOK_SECRET)
+      .digest('hex');
   }
 
   // System notification helpers

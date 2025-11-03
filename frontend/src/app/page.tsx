@@ -4,10 +4,12 @@ import Link from 'next/link';
 import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
 import { useWallet } from '@/lib/WalletContext';
 import { useEffect, useState } from 'react';
+import WalletConnectModal from '@/components/WalletConnectModal';
 
 export default function Home() {
   const { connected, connectWallet } = useWallet();
   const [mounted, setMounted] = useState(false);
+  const [walletModalOpen, setWalletModalOpen] = useState(false);
   const { scrollYProgress } = useScroll();
   const y = useTransform(scrollYProgress, [0, 1], ['0%', '50%']);
 
@@ -129,16 +131,16 @@ export default function Home() {
                   Go to Dashboard
                 </motion.button>
               </Link>
-            ) : (
-              <motion.button
-                onClick={connectWallet}
-                whileHover={{ scale: 1.05, boxShadow: '0 0 30px rgba(0,255,0,0.5)' }}
-                whileTap={{ scale: 0.95 }}
-                className="bg-gradient-to-r from-green-500 to-blue-600 text-white px-8 py-4 rounded-xl font-semibold text-lg hover:from-green-600 hover:to-blue-700 transition-all duration-300 shadow-lg"
-              >
-                Connect Wallet
-              </motion.button>
-            )}
+             ) : (
+               <motion.button
+                 onClick={() => setWalletModalOpen(true)}
+                 whileHover={{ scale: 1.05, boxShadow: '0 0 30px rgba(0,255,0,0.5)' }}
+                 whileTap={{ scale: 0.95 }}
+                 className="bg-gradient-to-r from-green-500 to-blue-600 text-white px-8 py-4 rounded-xl font-semibold text-lg hover:from-green-600 hover:to-blue-700 transition-all duration-300 shadow-lg"
+               >
+                 Connect Wallet
+               </motion.button>
+             )}
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -414,18 +416,24 @@ export default function Home() {
                 Launch Dashboard
               </motion.button>
             </Link>
-          ) : (
-            <motion.button
-              onClick={connectWallet}
-              whileHover={{ scale: 1.05, boxShadow: '0 0 40px rgba(255,255,255,0.3)' }}
-              whileTap={{ scale: 0.95 }}
-              className="bg-white text-green-600 px-10 py-4 rounded-xl font-bold text-xl hover:bg-gray-100 transition-all duration-300 shadow-lg"
-            >
-              Connect Wallet & Start
-            </motion.button>
-          )}
+           ) : (
+             <motion.button
+               onClick={() => setWalletModalOpen(true)}
+               whileHover={{ scale: 1.05, boxShadow: '0 0 40px rgba(255,255,255,0.3)' }}
+               whileTap={{ scale: 0.95 }}
+               className="bg-white text-green-600 px-10 py-4 rounded-xl font-bold text-xl hover:bg-gray-100 transition-all duration-300 shadow-lg"
+             >
+               Connect Wallet & Start
+             </motion.button>
+           )}
         </div>
       </motion.section>
+
+      {/* Wallet Connect Modal */}
+      <WalletConnectModal
+        isOpen={walletModalOpen}
+        onClose={() => setWalletModalOpen(false)}
+      />
     </div>
     </>
   );

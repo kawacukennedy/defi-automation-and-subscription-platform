@@ -206,6 +206,183 @@ class AnalyticsService {
     }
   }
 
+  async generatePredictiveAnalytics(days = 30) {
+    try {
+      // Get historical data for prediction
+      const endDate = new Date();
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - 90); // 90 days of historical data
+
+      const historicalData = await this.getAnalytics({
+        type: 'daily',
+        startDate,
+        endDate
+      });
+
+      if (historicalData.length < 7) {
+        return { error: 'Insufficient historical data for prediction' };
+      }
+
+      // Simple linear regression for predictions
+      const predictions = this.calculatePredictions(historicalData, days);
+
+      return {
+        predictions,
+        confidence: this.calculateConfidence(historicalData),
+        recommendations: this.generateRecommendations(predictions),
+        lastUpdated: new Date()
+      };
+    } catch (error) {
+      console.error('Error generating predictive analytics:', error);
+      throw error;
+    }
+  }
+
+  calculatePredictions(historicalData, days) {
+    const metrics = ['totalUsers', 'totalWorkflows', 'totalExecutions'];
+
+    return metrics.reduce((acc, metric) => {
+      const data = historicalData.map(d => ({
+        x: d.date.getTime(),
+        y: d.metrics[metric] || 0
+      })).filter(d => d.y > 0);
+
+      if (data.length < 2) {
+        acc[metric] = { predicted: 0, trend: 'insufficient-data' };
+        return acc;
+      }
+
+      // Simple linear regression
+      const n = data.length;
+      const sumX = data.reduce((sum, d) => sum + d.x, 0);
+      const sumY = data.reduce((sum, d) => sum + d.y, 0);
+      const sumXY = data.reduce((sum, d) => sum + d.x * d.y, 0);
+      const sumXX = data.reduce((sum, d) => sum + d.x * d.x, 0);
+
+      const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+      const intercept = (sumY - slope * sumX) / n;
+
+      // Predict for the specified days ahead
+      const futureDate = new Date();
+      futureDate.setDate(futureDate.getDate() + days);
+      const predicted = Math.max(0, Math.round(slope * futureDate.getTime() + intercept));
+
+      // Calculate trend
+      const recent = data.slice(-7).reduce((sum, d) => sum + d.y, 0) / 7;
+      const older = data.slice(-14, -7).reduce((sum, d) => sum + d.y, 0) / 7;
+      const trend = recent > older ? 'increasing' : recent < older ? 'decreasing' : 'stable';
+
+      acc[metric] = {
+        current: data[data.length - 1].y,
+        predicted,
+        change: ((predicted - data[data.length - 1].y) / data[data.length - 1].y * 100),
+        trend,
+        daysAhead: days
+      };
+
+      return acc;
+    }, {});
+  }
+
+  calculateConfidence(historicalData) {
+    // Simple confidence calculation based on data consistency
+    const successRates = historicalData
+      .map(d => d.performance?.successRate)
+      .filter(rate => rate !== undefined);
+
+    if (successRates.length === 0) return 0;
+
+    const mean = successRates.reduce((sum, rate) => sum + rate, 0) / successRates.length;
+    const variance = successRates.reduce((sum, rate) => sum + Math.pow(rate - mean, 2), 0) / successRates.length;
+    const stdDev = Math.sqrt(variance);
+
+    // Confidence based on coefficient of variation
+    const cv = stdDev / mean;
+    return Math.max(0, Math.min(100, (1 - cv) * 100));
+  }
+
+  generateRecommendations(predictions) {
+    const recommendations = [];
+
+    if (predictions.totalUsers?.trend === 'increasing') {
+      recommendations.push({
+        type: 'growth',
+        priority: 'high',
+        message: 'User growth is strong. Consider scaling infrastructure.',
+        action: 'Scale server resources'
+      });
+    }
+
+    if (predictions.totalWorkflows?.change > 20) {
+      recommendations.push({
+        type: 'optimization',
+        priority: 'medium',
+        message: 'Workflow creation is expected to increase significantly.',
+        action: 'Optimize workflow execution performance'
+      });
+    }
+
+    const avgSuccessRate = predictions.successRate || 95;
+    if (avgSuccessRate < 90) {
+      recommendations.push({
+        type: 'reliability',
+        priority: 'high',
+        message: 'Execution success rate may decline. Review error handling.',
+        action: 'Implement additional error recovery mechanisms'
+      });
+    }
+
+    return recommendations;
+  }
+
+  async exportAnalyticsData(format = 'json', filters = {}) {
+    try {
+      const data = await this.getAnalytics(filters);
+
+      if (format === 'csv') {
+        return this.convertToCSV(data);
+      }
+
+      return {
+        data,
+        metadata: {
+          exportedAt: new Date(),
+          totalRecords: data.length,
+          filters,
+          version: '1.0'
+        }
+      };
+    } catch (error) {
+      console.error('Error exporting analytics data:', error);
+      throw error;
+    }
+  }
+
+  convertToCSV(data) {
+    if (data.length === 0) return '';
+
+    const headers = Object.keys(data[0].toObject ? data[0].toObject() : data[0]);
+    const csvRows = [];
+
+    // Add headers
+    csvRows.push(headers.join(','));
+
+    // Add data rows
+    data.forEach(row => {
+      const values = headers.map(header => {
+        const value = row[header];
+        // Handle nested objects and arrays
+        if (typeof value === 'object') {
+          return JSON.stringify(value).replace(/"/g, '""');
+        }
+        return String(value || '').replace(/"/g, '""');
+      });
+      csvRows.push(values.join(','));
+    });
+
+    return csvRows.join('\n');
+  }
+
   async generateReport(type, startDate, endDate) {
     try {
       const analytics = await this.getAnalytics({
@@ -224,7 +401,8 @@ class AnalyticsService {
           avgSuccessRate: 0
         },
         trends: [],
-        topPerformers: {}
+        topPerformers: {},
+        predictive: await this.generatePredictiveAnalytics(30)
       };
 
       // Aggregate data
