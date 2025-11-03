@@ -12,7 +12,7 @@ export default function WorkflowDetail() {
 
   useEffect(() => {
     if (params.id) {
-      fetchWorkflowDetail(params.id);
+      fetchWorkflowDetail(params.id as string);
     }
   }, [params.id]);
 
