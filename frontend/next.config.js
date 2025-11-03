@@ -1,5 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Turbopack configuration
+  turbopack: {},
+
   // Enable experimental features for better performance
   experimental: {
     optimizeCss: true,
@@ -101,66 +104,7 @@ const nextConfig = {
     NEXT_PUBLIC_APP_ENV: process.env.NODE_ENV,
   },
 
-  // Bundle analyzer (conditionally)
-  ...(process.env.ANALYZE === 'true' && {
-    webpack: (config) => {
-      if (process.env.NODE_ENV === 'production') {
-        try {
-          const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
-          config.plugins.push(
-            new BundleAnalyzerPlugin({
-              analyzerMode: 'static',
-              openAnalyzer: false,
-            })
-          );
-        } catch (error) {
-          console.warn('Bundle analyzer not available');
-        }
-      }
-      return config;
-    },
-  }),
 
-  // PWA and performance optimizations
-  webpack: (config, { dev, isServer }) => {
-    // Optimize chunks for better caching
-    if (!dev && !isServer) {
-      config.optimization.splitChunks.chunks = 'all';
-      config.optimization.splitChunks.cacheGroups = {
-        ...config.optimization.splitChunks.cacheGroups,
-        vendor: {
-          test: /[\\/]node_modules[\\/]/,
-          name: 'vendors',
-          chunks: 'all',
-          priority: 10,
-        },
-        flow: {
-          test: /[\\/]node_modules[\\/]@onflow[\\/]/,
-          name: 'flow',
-          chunks: 'all',
-          priority: 20,
-        },
-        ui: {
-          test: /[\\/]node_modules[\\/]framer-motion[\\/]/,
-          name: 'ui',
-          chunks: 'all',
-          priority: 15,
-        },
-      };
-    }
-
-    // Enable webpack optimizations
-    if (!dev) {
-      config.optimization = {
-        ...config.optimization,
-        moduleIds: 'deterministic',
-        chunkIds: 'deterministic',
-        mangleExports: 'deterministic',
-      };
-    }
-
-    return config;
-  },
 
   // TypeScript strict mode
   typescript: {
