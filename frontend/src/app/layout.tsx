@@ -1,6 +1,6 @@
 'use client';
 
-import { Geist, Geist_Mono } from "next/font/google";
+// import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { WalletProvider } from "@/lib/WalletContext";
 import Link from "next/link";
@@ -41,15 +41,15 @@ const MotionSpan = dynamic(() => import('framer-motion').then(mod => ({ default:
   loading: () => <span></span>
 });
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+// const geistSans = Geist({
+//   variable: "--font-geist-sans",
+//   subsets: ["latin"],
+// });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+// const geistMono = Geist_Mono({
+//   variable: "--font-geist-mono",
+//   subsets: ["latin"],
+// });
 
 function LayoutContent({
   children,
@@ -128,7 +128,7 @@ function LayoutContent({
       </a>
 
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased transition-colors duration-300 bg-gradient-to-br from-blue-900 via-purple-900 to-green-900 text-white`}
+        className="antialiased transition-colors duration-300 bg-gradient-to-br from-blue-900 via-purple-900 to-green-900 text-white"
       >
         <ThemeProvider>
           <ToastProvider>
