@@ -7,7 +7,7 @@ import "./globals.css";
 import { WalletProvider } from "@/lib/WalletContext";
 import Link from "next/link";
 import { useState, useEffect, Suspense } from "react";
-import dynamic from 'next/dynamic';
+import dynamicImport from 'next/dynamic';
 import ErrorBoundary from "@/components/ErrorBoundary";
 import Loading from "@/components/Loading";
 import { ThemeProvider, useTheme } from "@/lib/ThemeContext";
@@ -17,27 +17,27 @@ import SearchBar from "@/components/SearchBar";
 import ToastContainer from "@/components/ToastContainer";
 
 // Lazy load heavy components
-const MotionDiv = dynamic(() => import('framer-motion').then(mod => mod.motion.div), {
+const MotionDiv = dynamicImport(() => import('framer-motion').then(mod => mod.motion.div), {
   ssr: false,
   loading: () => <Loading size="sm" text="Loading..." />
 });
 
-const MotionNav = dynamic(() => import('framer-motion').then(mod => mod.motion.nav), {
+const MotionNav = dynamicImport(() => import('framer-motion').then(mod => mod.motion.nav), {
   ssr: false,
   loading: () => <Loading size="md" text="Loading navigation..." />
 });
 
-const MotionFooter = dynamic(() => import('framer-motion').then(mod => mod.motion.footer), {
+const MotionFooter = dynamicImport(() => import('framer-motion').then(mod => mod.motion.footer), {
   ssr: false,
   loading: () => <Loading size="md" text="Loading footer..." />
 });
 
-const MotionButton = dynamic(() => import('framer-motion').then(mod => mod.motion.button), {
+const MotionButton = dynamicImport(() => import('framer-motion').then(mod => mod.motion.button), {
   ssr: false,
   loading: () => <Loading size="sm" />
 });
 
-const MotionSpan = dynamic(() => import('framer-motion').then(mod => mod.motion.span), {
+const MotionSpan = dynamicImport(() => import('framer-motion').then(mod => mod.motion.span), {
   ssr: false,
   loading: () => <span></span>
 });
