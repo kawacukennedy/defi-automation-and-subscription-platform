@@ -90,7 +90,7 @@ export default function Settings() {
       await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
 
       success('Settings Saved', 'Your preferences have been updated successfully.');
-    } catch (error) {
+    } catch (err) {
       error('Save Failed', 'Unable to save your settings. Please try again.');
     } finally {
       setLoading(false);
