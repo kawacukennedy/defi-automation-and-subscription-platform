@@ -29,7 +29,7 @@ export default function WorkflowDetail() {
   const router = useRouter();
   const [workflow, setWorkflow] = useState<WorkflowDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  const [action, setAction] = useState<'pause' | 'resume' | 'cancel' | null>(null);
+  const [action, setAction] = useState(null);
   const [countdown, setCountdown] = useState<string>('');
 
   useEffect(() => {
