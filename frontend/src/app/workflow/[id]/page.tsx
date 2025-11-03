@@ -7,7 +7,7 @@ import Link from 'next/link';
 export default function WorkflowDetail() {
   const params = useParams();
   const router = useRouter();
-  const [workflow, setWorkflow] = useState(null);
+  const [workflow, setWorkflow] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
