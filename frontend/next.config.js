@@ -1,6 +1,5 @@
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   // Enable experimental features for better performance
   experimental: {
     optimizeCss: true,
@@ -104,7 +103,7 @@ const nextConfig: NextConfig = {
 
   // Bundle analyzer (conditionally)
   ...(process.env.ANALYZE === 'true' && {
-    webpack: (config: any) => {
+    webpack: (config) => {
       if (process.env.NODE_ENV === 'production') {
         try {
           const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
@@ -123,7 +122,7 @@ const nextConfig: NextConfig = {
   }),
 
   // PWA and performance optimizations
-  webpack: (config: any, { dev, isServer }: any) => {
+  webpack: (config, { dev, isServer }) => {
     // Optimize chunks for better caching
     if (!dev && !isServer) {
       config.optimization.splitChunks.chunks = 'all';
@@ -172,4 +171,4 @@ const nextConfig: NextConfig = {
   output: 'standalone',
 };
 
-export default nextConfig;
+module.exports = nextConfig;
