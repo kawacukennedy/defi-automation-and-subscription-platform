@@ -53,7 +53,7 @@ export default function WorkflowDetail() {
         const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
         const seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
-        setCountdown(`${days}d ${hours}h ${minutes}m ${seconds}s`);
+        setCountdown(days + 'd ' + hours + 'h ' + minutes + 'm ' + seconds + 's');
       } else {
         setCountdown('Executing...');
       }
