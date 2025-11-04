@@ -1,41 +1,41 @@
 // FlowFiWorkflowContract.cdc
 // Main contract for managing DeFi automation workflows
 
-import FungibleToken from 0x9a0766d93b6608b7
-import FlowToken from 0x7e60df042a9c0868
-import FlowFiNFTRewards from 0xFlowFiNFTRewards
+import FungibleToken from 0xee82856bf20e2aa6
+import FlowToken from 0x0ae53cb6e3f42a79
+import FlowFiNFTRewards from "FlowFiNFTRewards"
 
-pub contract FlowFiWorkflowContract {
+access(all) contract FlowFiWorkflowContract {
 
     // Events
-    pub event WorkflowCreated(id: UInt64, owner: Address, action: String, token: String)
-    pub event WorkflowExecuted(id: UInt64, success: Bool, gasUsed: UInt64)
-    pub event WorkflowPaused(id: UInt64)
-    pub event WorkflowCancelled(id: UInt64)
-    pub event WorkflowFailed(id: UInt64, reason: String)
-    pub event WorkflowRetried(id: UInt64, attempt: UInt64)
-    pub event NftRewardMinted(workflowId: UInt64, nftId: UInt64, recipient: Address)
-    pub event ContractUpgraded(newVersion: String)
+    access(all) event WorkflowCreated(id: UInt64, owner: Address, action: String, token: String)
+    access(all) event WorkflowExecuted(id: UInt64, success: Bool, gasUsed: UInt64)
+    access(all) event WorkflowPaused(id: UInt64)
+    access(all) event WorkflowCancelled(id: UInt64)
+    access(all) event WorkflowFailed(id: UInt64, reason: String)
+    access(all) event WorkflowRetried(id: UInt64, attempt: UInt64)
+    access(all) event NftRewardMinted(workflowId: UInt64, nftId: UInt64, recipient: Address)
+    access(all) event ContractUpgraded(newVersion: String)
 
     // Workflow struct
-    pub struct Workflow {
-        pub let id: UInt64
-        pub let owner: Address
-        pub let action: String
-        pub let token: String
-        pub let amount: UFix64
-        pub let schedule: String
-        pub let trigger: String
-        pub let metadata: {String: String}
-        pub let composableWorkflows: [UInt64] // IDs of workflows this can trigger
-        pub var isActive: Bool
-        pub var lastExecution: UFix64
-        pub var executionCount: UInt64
-        pub var successCount: UInt64
-        pub var failureCount: UInt64
-        pub var retryCount: UInt64
-        pub var maxRetries: UInt64
-        pub var gasLimit: UInt64
+    access(all) struct Workflow {
+        access(all) let id: UInt64
+        access(all) let owner: Address
+        access(all) let action: String
+        access(all) let token: String
+        access(all) let amount: UFix64
+        access(all) let schedule: String
+        access(all) let trigger: String
+        access(all) let metadata: {String: String}
+        access(all) let composableWorkflows: [UInt64] // IDs of workflows this can trigger
+        access(all) var isActive: Bool
+        access(all) var lastExecution: UFix64
+        access(all) var executionCount: UInt64
+        access(all) var successCount: UInt64
+        access(all) var failureCount: UInt64
+        access(all) var retryCount: UInt64
+        access(all) var maxRetries: UInt64
+        access(all) var gasLimit: UInt64
 
         init(id: UInt64, owner: Address, action: String, token: String, amount: UFix64, schedule: String, trigger: String, metadata: {String: String}, composableWorkflows: [UInt64], maxRetries: UInt64, gasLimit: UInt64) {
             self.id = id
@@ -57,7 +57,7 @@ pub contract FlowFiWorkflowContract {
             self.gasLimit = gasLimit
         }
 
-        pub fun updateExecution(timestamp: UFix64, success: Bool) {
+        access(all) fun updateExecution(timestamp: UFix64, success: Bool) {
             self.lastExecution = timestamp
             self.executionCount = self.executionCount + 1
             if success {
@@ -68,23 +68,23 @@ pub contract FlowFiWorkflowContract {
             }
         }
 
-        pub fun incrementRetry() {
+        access(all) fun incrementRetry() {
             self.retryCount = self.retryCount + 1
         }
 
-        pub fun canRetry(): Bool {
+        access(all) fun canRetry(): Bool {
             return self.retryCount < self.maxRetries
         }
 
-        pub fun pause() {
+        access(all) fun pause() {
             self.isActive = false
         }
 
-        pub fun resume() {
+        access(all) fun resume() {
             self.isActive = true
         }
 
-        pub fun getSuccessRate(): UFix64 {
+        access(all) fun getSuccessRate(): UFix64 {
             if self.executionCount == 0 {
                 return 0.0
             }
@@ -93,20 +93,20 @@ pub contract FlowFiWorkflowContract {
     }
 
     // Storage
-    pub var workflows: {UInt64: Workflow}
-    pub var nextWorkflowId: UInt64
-    pub var totalWorkflows: UInt64
-    pub var totalExecutions: UInt64
-    pub var totalSuccessfulExecutions: UInt64
+    access(all) var workflows: {UInt64: Workflow}
+    access(all) var nextWorkflowId: UInt64
+    access(all) var totalWorkflows: UInt64
+    access(all) var totalExecutions: UInt64
+    access(all) var totalSuccessfulExecutions: UInt64
 
     // Contract owner
-    pub let admin: Address
+    access(all) let admin: Address
 
     // Upgradeable contract version
-    pub var version: String
+    access(all) var version: String
 
     // Testing hooks (only active in testnet)
-    pub var testingMode: Bool
+    access(all) var testingMode: Bool
 
     init() {
         self.workflows = {}
@@ -120,7 +120,7 @@ pub contract FlowFiWorkflowContract {
     }
 
     // Create a new workflow
-    pub fun createWorkflow(
+    access(all) fun createWorkflow(
         action: String,
         token: String,
         amount: UFix64,
@@ -168,7 +168,7 @@ pub contract FlowFiWorkflowContract {
     }
 
     // Execute workflow (called by Forte Actions)
-    pub fun executeWorkflow(id: UInt64): Bool {
+    access(all) fun executeWorkflow(id: UInt64): Bool {
         pre {
             self.workflows.containsKey(id): "Workflow does not exist"
         }
@@ -229,7 +229,7 @@ pub contract FlowFiWorkflowContract {
     }
 
     // Pause workflow
-    pub fun pauseWorkflow(id: UInt64) {
+    access(all) fun pauseWorkflow(id: UInt64) {
         pre {
             self.workflows.containsKey(id): "Workflow does not exist"
             self.workflows[id]!.owner == self.account.address: "Not workflow owner"
@@ -240,7 +240,7 @@ pub contract FlowFiWorkflowContract {
     }
 
     // Cancel workflow
-    pub fun cancelWorkflow(id: UInt64) {
+    access(all) fun cancelWorkflow(id: UInt64) {
         pre {
             self.workflows.containsKey(id): "Workflow does not exist"
             self.workflows[id]!.owner == self.account.address: "Not workflow owner"
@@ -251,12 +251,12 @@ pub contract FlowFiWorkflowContract {
     }
 
     // Get workflow details
-    pub fun getWorkflow(id: UInt64): Workflow? {
+    access(all) fun getWorkflow(id: UInt64): Workflow? {
         return self.workflows[id]
     }
 
     // Get all workflows for an address
-    pub fun getWorkflowsByOwner(owner: Address): [Workflow] {
+    access(all) fun getWorkflowsByOwner(owner: Address): [Workflow] {
         var ownerWorkflows: [Workflow] = []
         for workflow in self.workflows.values {
             if workflow.owner == owner {
@@ -342,7 +342,7 @@ pub contract FlowFiWorkflowContract {
     }
 
     // Upgradeable contract functions
-    pub fun upgradeContract(newVersion: String) {
+    access(all) fun upgradeContract(newVersion: String) {
         pre {
             self.account.address == self.admin: "Only admin can upgrade"
         }
@@ -351,21 +351,21 @@ pub contract FlowFiWorkflowContract {
     }
 
     // Testing hooks
-    pub fun enableTestingMode() {
+    access(all) fun enableTestingMode() {
         pre {
             self.account.address == self.admin: "Only admin can enable testing mode"
         }
         self.testingMode = true
     }
 
-    pub fun disableTestingMode() {
+    access(all) fun disableTestingMode() {
         pre {
             self.account.address == self.admin: "Only admin can disable testing mode"
         }
         self.testingMode = false
     }
 
-    pub fun mockExecution(id: UInt64, success: Bool) {
+    access(all) fun mockExecution(id: UInt64, success: Bool) {
         pre {
             self.testingMode: "Testing mode must be enabled"
             self.workflows.containsKey(id): "Workflow does not exist"
@@ -382,22 +382,22 @@ pub contract FlowFiWorkflowContract {
     }
 
     // Analytics functions
-    pub fun getTotalWorkflows(): UInt64 {
+    access(all) fun getTotalWorkflows(): UInt64 {
         return self.totalWorkflows
     }
 
-    pub fun getTotalExecutions(): UInt64 {
+    access(all) fun getTotalExecutions(): UInt64 {
         return self.totalExecutions
     }
 
-    pub fun getSuccessRate(): UFix64 {
+    access(all) fun getSuccessRate(): UFix64 {
         if self.totalExecutions == 0 {
             return 0.0
         }
         return UFix64(self.totalSuccessfulExecutions) / UFix64(self.totalExecutions)
     }
 
-    pub fun getWorkflowStats(id: UInt64): {String: AnyStruct} {
+    access(all) fun getWorkflowStats(id: UInt64): {String: AnyStruct} {
         pre {
             self.workflows.containsKey(id): "Workflow does not exist"
         }

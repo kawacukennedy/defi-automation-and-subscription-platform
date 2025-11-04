@@ -1,44 +1,43 @@
 // FlowFiNFTRewards.cdc
 // Contract for minting NFT achievement badges
 
-import NonFungibleToken from 0x1d7e57aa55817448
-import MetadataViews from 0x1d7e57aa55817448
-import FlowFiWorkflowContract from 0xFlowFiWorkflowContract
+import NonFungibleToken from 0xf8d6e0586b0a20c7
+import MetadataViews from 0xf8d6e0586b0a20c7
 
-pub contract FlowFiNFTRewards: NonFungibleToken {
+access(all) contract FlowFiNFTRewards: NonFungibleToken {
 
     // Events
-    pub event ContractInitialized()
-    pub event Withdraw(id: UInt64, from: Address?)
-    pub event Deposit(id: UInt64, to: Address?)
-    pub event NFTMinted(id: UInt64, badgeType: String, recipient: Address, thirdwebId: String?, crossmintId: String?)
-    pub event BadgeTemplateForked(originalId: UInt64, newId: UInt64, forker: Address)
-    pub event LeaderboardUpdated(user: Address, score: UInt64, rank: UInt64)
+    access(all) event ContractInitialized()
+    access(all) event Withdraw(id: UInt64, from: Address?)
+    access(all) event Deposit(id: UInt64, to: Address?)
+    access(all) event NFTMinted(id: UInt64, badgeType: String, recipient: Address, thirdwebId: String?, crossmintId: String?)
+    access(all) event BadgeTemplateForked(originalId: UInt64, newId: UInt64, forker: Address)
+    access(all) event LeaderboardUpdated(user: Address, score: UInt64, rank: UInt64)
 
     // Badge types
-    pub enum BadgeType: UInt8 {
-        pub case WorkflowMaster
-        pub case StakingPro
-        pub case PaymentWarrior
-        pub case CommunityContributor
-        pub case EarlyAdopter
-        pub case MonthlyStreak
-        pub case DAOChampion
-        pub case TemplateForker
-        pub case HighValueWorkflow
-        pub case BetaTester
+    access(all) enum BadgeType: UInt8 {
+        access(all) case WorkflowMaster
+        access(all) case StakingPro
+        access(all) case PaymentWarrior
+        access(all) case CommunityContributor
+        access(all) case EarlyAdopter
+        access(all) case MonthlyStreak
+        access(all) case DAOChampion
+        access(all) case TemplateForker
+        access(all) case HighValueWorkflow
+        access(all) case BetaTester
     }
 
     // NFT resource
-    pub resource NFT: NonFungibleToken.INFT, MetadataViews.Resolver {
-        pub let id: UInt64
-        pub let badgeType: BadgeType
-        pub let mintedAt: UFix64
-        pub let metadata: {String: String}
-        pub let thirdwebId: String?
-        pub let crossmintId: String?
-        pub let forkable: Bool
-        pub let originalTemplateId: UInt64?
+    access(all) resource NFT: NonFungibleToken.INFT, MetadataViews.Resolver {
+        access(all) let id: UInt64
+        access(all) let badgeType: BadgeType
+        access(all) let mintedAt: UFix64
+        access(all) let metadata: {String: String}
+        access(all) let thirdwebId: String?
+        access(all) let crossmintId: String?
+        access(all) let forkable: Bool
+        access(all) let originalTemplateId: UInt64?
 
         init(id: UInt64, badgeType: BadgeType, metadata: {String: String}, thirdwebId: String?, crossmintId: String?, forkable: Bool, originalTemplateId: UInt64?) {
             self.id = id
@@ -51,7 +50,7 @@ pub contract FlowFiNFTRewards: NonFungibleToken {
             self.originalTemplateId = originalTemplateId
         }
 
-        pub fun getViews(): [Type] {
+        access(all) fun getViews(): [Type] {
             return [
                 Type<MetadataViews.Display>(),
                 Type<MetadataViews.Royalties>(),
@@ -64,7 +63,7 @@ pub contract FlowFiNFTRewards: NonFungibleToken {
             ]
         }
 
-        pub fun resolveView(_ view: Type): AnyStruct? {
+        access(all) fun resolveView(_ view: Type): AnyStruct? {
             switch view {
                 case Type<MetadataViews.Display>():
                     return MetadataViews.Display(
@@ -83,8 +82,8 @@ pub contract FlowFiNFTRewards: NonFungibleToken {
     }
 
     // Collection resource
-    pub resource Collection: NonFungibleToken.Provider, NonFungibleToken.Receiver, NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection {
-        pub var ownedNFTs: @{UInt64: NonFungibleToken.NFT}
+    access(all) resource Collection: NonFungibleToken.Provider, NonFungibleToken.Receiver, NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection {
+        access(all) var ownedNFTs: @{UInt64: NonFungibleToken.NFT}
 
         init() {
             self.ownedNFTs <- {}
@@ -94,13 +93,13 @@ pub contract FlowFiNFTRewards: NonFungibleToken {
             destroy self.ownedNFTs
         }
 
-        pub fun withdraw(withdrawID: UInt64): @NonFungibleToken.NFT {
+        access(all) fun withdraw(withdrawID: UInt64): @NonFungibleToken.NFT {
             let token <- self.ownedNFTs.remove(key: withdrawID) ?? panic("missing NFT")
             emit Withdraw(id: token.id, from: self.owner?.address)
             return <-token
         }
 
-        pub fun deposit(token: @NonFungibleToken.NFT) {
+        access(all) fun deposit(token: @NonFungibleToken.NFT) {
             let token <- token as! @FlowFiNFTRewards.NFT
             let id: UInt64 = token.id
             let oldToken <- self.ownedNFTs[token.id] <- token
@@ -108,15 +107,15 @@ pub contract FlowFiNFTRewards: NonFungibleToken {
             destroy oldToken
         }
 
-        pub fun getIDs(): [UInt64] {
+        access(all) fun getIDs(): [UInt64] {
             return self.ownedNFTs.keys
         }
 
-        pub fun borrowNFT(id: UInt64): &NonFungibleToken.NFT {
+        access(all) fun borrowNFT(id: UInt64): &NonFungibleToken.NFT {
             return (&self.ownedNFTs[id] as &NonFungibleToken.NFT?)!
         }
 
-        pub fun borrowFlowFiNFT(id: UInt64): &FlowFiNFTRewards.NFT? {
+        access(all) fun borrowFlowFiNFT(id: UInt64): &FlowFiNFTRewards.NFT? {
             if self.ownedNFTs[self.id] != nil {
                 let ref = (&self.ownedNFTs[id] as auth &NonFungibleToken.NFT?)!
                 return ref as! &FlowFiNFTRewards.NFT
@@ -124,7 +123,7 @@ pub contract FlowFiNFTRewards: NonFungibleToken {
             return nil
         }
 
-        pub fun borrowViewResolver(id: UInt64): &AnyResource{MetadataViews.Resolver} {
+        access(all) fun borrowViewResolver(id: UInt64): &AnyResource{MetadataViews.Resolver} {
             let nft = (&self.ownedNFTs[id] as auth &NonFungibleToken.NFT?)!
             let FlowFiNFT = nft as! &FlowFiNFTRewards.NFT
             return FlowFiNFT as &AnyResource{MetadataViews.Resolver}
@@ -132,20 +131,20 @@ pub contract FlowFiNFTRewards: NonFungibleToken {
     }
 
     // Storage
-    pub var totalSupply: UInt64
-    pub var nextNFTId: UInt64
-    pub let admin: Address
+    access(all) var totalSupply: UInt64
+    access(all) var nextNFTId: UInt64
+    access(all) let admin: Address
 
     // Badge metadata templates
-    pub let badgeMetadata: {BadgeType: {String: String}}
+    access(all) let badgeMetadata: {BadgeType: {String: String}}
 
     // Leaderboard
-    pub var leaderboard: {Address: UInt64} // Address -> Score
-    pub var userBadges: {Address: [UInt64]} // Address -> Badge IDs
+    access(all) var leaderboard: {Address: UInt64} // Address -> Score
+    access(all) var userBadges: {Address: [UInt64]} // Address -> Badge IDs
 
     // Forkable templates
-    pub var badgeTemplates: {UInt64: {String: String}}
-    pub var nextTemplateId: UInt64
+    access(all) var badgeTemplates: {UInt64: {String: String}}
+    access(all) var nextTemplateId: UInt64
 
     init() {
         self.totalSupply = 0
@@ -217,7 +216,7 @@ pub contract FlowFiNFTRewards: NonFungibleToken {
     }
 
     // Mint NFT badge
-    pub fun mintBadge(recipient: Address, badgeType: BadgeType): @NFT {
+    access(all) fun mintBadge(recipient: Address, badgeType: BadgeType): @NFT {
         pre {
             self.account.address == self.admin: "Only admin can mint badges"
         }
@@ -257,12 +256,12 @@ pub contract FlowFiNFTRewards: NonFungibleToken {
     }
 
     // Create empty collection
-    pub fun createEmptyCollection(): @Collection {
+    access(all) fun createEmptyCollection(): @Collection {
         return <- create Collection()
     }
 
     // Get badge metadata
-    pub fun getBadgeMetadata(badgeType: BadgeType): {String: String} {
+    access(all) fun getBadgeMetadata(badgeType: BadgeType): {String: String} {
         return self.badgeMetadata[badgeType] ?? {}
     }
 
@@ -303,20 +302,20 @@ pub contract FlowFiNFTRewards: NonFungibleToken {
         return rank
     }
 
-    pub fun getLeaderboard(): {Address: UInt64} {
+    access(all) fun getLeaderboard(): {Address: UInt64} {
         return self.leaderboard
     }
 
-    pub fun getUserRank(user: Address): UInt64 {
+    access(all) fun getUserRank(user: Address): UInt64 {
         return self.calculateRank(user)
     }
 
-    pub fun getUserScore(user: Address): UInt64 {
+    access(all) fun getUserScore(user: Address): UInt64 {
         return self.leaderboard[user] ?? 0
     }
 
     // Template functions
-    pub fun createBadgeTemplate(metadata: {String: String}): UInt64 {
+    access(all) fun createBadgeTemplate(metadata: {String: String}): UInt64 {
         let templateId = self.nextTemplateId
         self.nextTemplateId = self.nextTemplateId + 1
 
@@ -324,7 +323,7 @@ pub contract FlowFiNFTRewards: NonFungibleToken {
         return templateId
     }
 
-    pub fun forkBadgeTemplate(originalTemplateId: UInt64, newMetadata: {String: String}, forker: Address): UInt64 {
+    access(all) fun forkBadgeTemplate(originalTemplateId: UInt64, newMetadata: {String: String}, forker: Address): UInt64 {
         pre {
             self.badgeTemplates.containsKey(originalTemplateId): "Template does not exist"
         }
@@ -339,18 +338,17 @@ pub contract FlowFiNFTRewards: NonFungibleToken {
         return newTemplateId
     }
 
-    pub fun getBadgeTemplate(templateId: UInt64): {String: String}? {
+    access(all) fun getBadgeTemplate(templateId: UInt64): {String: String}? {
         return self.badgeTemplates[templateId]
     }
 
-    pub fun getUserBadges(user: Address): [UInt64] {
+    access(all) fun getUserBadges(user: Address): [UInt64] {
         return self.userBadges[user] ?? []
     }
 
     // Gamification functions
-    pub fun checkAndMintAchievements(user: Address) {
+    access(all) fun checkAndMintAchievements(user: Address, workflowCount: UInt64) {
         // Check workflow count
-        let workflowCount = FlowFiWorkflowContract.getWorkflowsByOwner(owner: user).length
         if workflowCount >= 100 && !self.hasBadgeType(user, BadgeType.WorkflowMaster) {
             let nft <- self.mintBadge(recipient: user, badgeType: BadgeType.WorkflowMaster)
             destroy nft

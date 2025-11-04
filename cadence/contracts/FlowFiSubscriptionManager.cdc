@@ -1,41 +1,41 @@
 // FlowFiSubscriptionManager.cdc
 // Contract for managing recurring payments and subscriptions
 
-import FungibleToken from 0x9a0766d93b6608b7
-import FlowToken from 0x7e60df042a9c0868
-import FlowFiWorkflowContract from 0xFlowFiWorkflowContract
+import FungibleToken from 0xee82856bf20e2aa6
+import FlowToken from 0x0ae53cb6e3f42a79
+import FlowFiWorkflowContract from "FlowFiWorkflowContract"
 
-pub contract FlowFiSubscriptionManager {
+access(all) contract FlowFiSubscriptionManager {
 
     // Events
-    pub event SubscriptionCreated(id: UInt64, subscriber: Address, recipient: Address, token: String, amount: UFix64, interval: UInt64, fee: UFix64)
-    pub event PaymentExecuted(id: UInt64, amount: UFix64, fee: UFix64, success: Bool, gasUsed: UInt64)
-    pub event SubscriptionCancelled(id: UInt64)
-    pub event PaymentFailed(id: UInt64, reason: String)
-    pub event PaymentRetried(id: UInt64, attempt: UInt64)
-    pub event PaymentRolledBack(id: UInt64, amount: UFix64)
+    access(all) event SubscriptionCreated(id: UInt64, subscriber: Address, recipient: Address, token: String, amount: UFix64, interval: UInt64, fee: UFix64)
+    access(all) event PaymentExecuted(id: UInt64, amount: UFix64, fee: UFix64, success: Bool, gasUsed: UInt64)
+    access(all) event SubscriptionCancelled(id: UInt64)
+    access(all) event PaymentFailed(id: UInt64, reason: String)
+    access(all) event PaymentRetried(id: UInt64, attempt: UInt64)
+    access(all) event PaymentRolledBack(id: UInt64, amount: UFix64)
 
     // Subscription struct
-    pub struct Subscription {
-        pub let id: UInt64
-        pub let subscriber: Address
-        pub let recipient: Address
-        pub let token: String
-        pub let amount: UFix64
-        pub let fee: UFix64
-        pub let interval: UInt64 // seconds
-        pub let metadata: {String: String}
-        pub let composableWorkflows: [UInt64] // Workflows to trigger after payment
-        pub var nextPayment: UFix64
-        pub var isActive: Bool
-        pub var paymentCount: UInt64
-        pub var successfulPayments: UInt64
-        pub var failedPayments: UInt64
-        pub var retryCount: UInt64
-        pub var maxRetries: UInt64
-        pub var lastPaymentAmount: UFix64
-        pub var totalPaid: UFix64
-        pub var gasLimit: UInt64
+    access(all) struct Subscription {
+        access(all) let id: UInt64
+        access(all) let subscriber: Address
+        access(all) let recipient: Address
+        access(all) let token: String
+        access(all) let amount: UFix64
+        access(all) let fee: UFix64
+        access(all) let interval: UInt64 // seconds
+        access(all) let metadata: {String: String}
+        access(all) let composableWorkflows: [UInt64] // Workflows to trigger after payment
+        access(all) var nextPayment: UFix64
+        access(all) var isActive: Bool
+        access(all) var paymentCount: UInt64
+        access(all) var successfulPayments: UInt64
+        access(all) var failedPayments: UInt64
+        access(all) var retryCount: UInt64
+        access(all) var maxRetries: UInt64
+        access(all) var lastPaymentAmount: UFix64
+        access(all) var totalPaid: UFix64
+        access(all) var gasLimit: UInt64
 
         init(id: UInt64, subscriber: Address, recipient: Address, token: String, amount: UFix64, fee: UFix64, interval: UInt64, metadata: {String: String}, composableWorkflows: [UInt64], maxRetries: UInt64, gasLimit: UInt64) {
             self.id = id
@@ -59,7 +59,7 @@ pub contract FlowFiSubscriptionManager {
             self.gasLimit = gasLimit
         }
 
-        pub fun executePayment(): Bool {
+        access(all) fun executePayment(): Bool {
             if getCurrentBlock().timestamp < self.nextPayment {
                 return false
             }
@@ -107,7 +107,7 @@ pub contract FlowFiSubscriptionManager {
             return success
         }
 
-        pub fun rollbackPayment() {
+        access(all) fun rollbackPayment() {
             // Rollback last payment if possible
             if self.lastPaymentAmount > 0.0 {
                 // Attempt to refund
@@ -120,11 +120,11 @@ pub contract FlowFiSubscriptionManager {
             }
         }
 
-        pub fun cancel() {
+        access(all) fun cancel() {
             self.isActive = false
         }
 
-        pub fun getSuccessRate(): UFix64 {
+        access(all) fun getSuccessRate(): UFix64 {
             if self.paymentCount == 0 {
                 return 0.0
             }
@@ -133,15 +133,15 @@ pub contract FlowFiSubscriptionManager {
     }
 
     // Storage
-    pub var subscriptions: {UInt64: Subscription}
-    pub var nextSubscriptionId: UInt64
-    pub var totalSubscriptions: UInt64
-    pub var totalPayments: UInt64
-    pub var totalSuccessfulPayments: UInt64
-    pub var platformFees: UFix64
+    access(all) var subscriptions: {UInt64: Subscription}
+    access(all) var nextSubscriptionId: UInt64
+    access(all) var totalSubscriptions: UInt64
+    access(all) var totalPayments: UInt64
+    access(all) var totalSuccessfulPayments: UInt64
+    access(all) var platformFees: UFix64
 
     // Contract admin
-    pub let admin: Address
+    access(all) let admin: Address
 
     init() {
         self.subscriptions = {}
@@ -154,7 +154,7 @@ pub contract FlowFiSubscriptionManager {
     }
 
     // Create subscription
-    pub fun createSubscription(
+    access(all) fun createSubscription(
         recipient: Address,
         token: String,
         amount: UFix64,
@@ -205,7 +205,7 @@ pub contract FlowFiSubscriptionManager {
     }
 
     // Execute payment (called by Forte Actions)
-    pub fun executePayment(id: UInt64): Bool {
+    access(all) fun executePayment(id: UInt64): Bool {
         pre {
             self.subscriptions.containsKey(id): "Subscription does not exist"
         }
@@ -231,7 +231,7 @@ pub contract FlowFiSubscriptionManager {
     }
 
     // Cancel subscription
-    pub fun cancelSubscription(id: UInt64) {
+    access(all) fun cancelSubscription(id: UInt64) {
         pre {
             self.subscriptions.containsKey(id): "Subscription does not exist"
             self.subscriptions[id]!.subscriber == self.account.address: "Not subscription owner"
@@ -242,12 +242,12 @@ pub contract FlowFiSubscriptionManager {
     }
 
     // Get subscription
-    pub fun getSubscription(id: UInt64): Subscription? {
+    access(all) fun getSubscription(id: UInt64): Subscription? {
         return self.subscriptions[id]
     }
 
     // Get subscriptions by subscriber
-    pub fun getSubscriptionsBySubscriber(subscriber: Address): [Subscription] {
+    access(all) fun getSubscriptionsBySubscriber(subscriber: Address): [Subscription] {
         var subscriberSubscriptions: [Subscription] = []
         for subscription in self.subscriptions.values {
             if subscription.subscriber == subscriber {
@@ -258,7 +258,7 @@ pub contract FlowFiSubscriptionManager {
     }
 
     // Helper functions
-    pub fun checkBalance(address: Address, token: String, amount: UFix64): Bool {
+    access(all) fun checkBalance(address: Address, token: String, amount: UFix64): Bool {
         // Mock balance checking - in real implementation, check user's vault
         // For FlowToken specifically
         if token == "FLOW" {
@@ -272,7 +272,7 @@ pub contract FlowFiSubscriptionManager {
         return true // Mock: assume sufficient balance
     }
 
-    pub fun transferTokens(from: Address, to: Address, token: String, amount: UFix64, fee: UFix64): Bool {
+    access(all) fun transferTokens(from: Address, to: Address, token: String, amount: UFix64, fee: UFix64): Bool {
         // Mock token transfer - in real implementation, borrow vaults and transfer
         // For FlowToken
         if token == "FLOW" {
@@ -289,26 +289,26 @@ pub contract FlowFiSubscriptionManager {
     }
 
     // Analytics functions
-    pub fun getTotalSubscriptions(): UInt64 {
+    access(all) fun getTotalSubscriptions(): UInt64 {
         return self.totalSubscriptions
     }
 
-    pub fun getTotalPayments(): UInt64 {
+    access(all) fun getTotalPayments(): UInt64 {
         return self.totalPayments
     }
 
-    pub fun getPaymentSuccessRate(): UFix64 {
+    access(all) fun getPaymentSuccessRate(): UFix64 {
         if self.totalPayments == 0 {
             return 0.0
         }
         return UFix64(self.totalSuccessfulPayments) / UFix64(self.totalPayments)
     }
 
-    pub fun getPlatformFees(): UFix64 {
+    access(all) fun getPlatformFees(): UFix64 {
         return self.platformFees
     }
 
-    pub fun getSubscriptionStats(id: UInt64): {String: AnyStruct} {
+    access(all) fun getSubscriptionStats(id: UInt64): {String: AnyStruct} {
         pre {
             self.subscriptions.containsKey(id): "Subscription does not exist"
         }

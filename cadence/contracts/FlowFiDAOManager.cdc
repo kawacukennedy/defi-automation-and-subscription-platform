@@ -1,55 +1,55 @@
 // FlowFiDAOManager.cdc
 // DAO Manager Contract for FlowFi
 
-import FungibleToken from 0x9a0766d93b6608b7
-import NonFungibleToken from 0x631e88ae7f1d7c20
-import FlowToken from 0x7e60df042a9c0868
-import FlowFiWorkflowContract from 0xFlowFiWorkflowContract
-import FlowFiNFTRewards from 0xFlowFiNFTRewards
+import FungibleToken from 0xee82856bf20e2aa6
+import NonFungibleToken from 0xf8d6e0586b0a20c7
+import FlowToken from 0x0ae53cb6e3f42a79
+import FlowFiWorkflowContract from "FlowFiWorkflowContract"
+import FlowFiNFTRewards from "FlowFiNFTRewards"
 
-pub contract FlowFiDAOManager {
+access(all) contract FlowFiDAOManager {
 
     // Events
-    pub event ProposalCreated(id: UInt64, proposer: Address, description: String, proposalType: String)
-    pub event VoteCast(proposalId: UInt64, voter: Address, vote: Bool, weight: UInt64)
-    pub event ProposalExecuted(proposalId: UInt64, success: Bool)
-    pub event MultiSigApproved(proposalId: UInt64, approver: Address)
-    pub event RewardDistributed(user: Address, amount: UFix64, reason: String)
-    pub event ReputationUpdated(user: Address, newReputation: UInt64)
-    pub event WorkflowTemplateAdopted(templateId: UInt64, daoId: UInt64)
-    pub event DAOCreated(id: UInt64, name: String, creator: Address)
-    pub event WorkflowShared(daoId: UInt64, workflowId: UInt64, sharedBy: Address)
+    access(all) event ProposalCreated(id: UInt64, proposer: Address, description: String, proposalType: String)
+    access(all) event VoteCast(proposalId: UInt64, voter: Address, vote: Bool, weight: UInt64)
+    access(all) event ProposalExecuted(proposalId: UInt64, success: Bool)
+    access(all) event MultiSigApproved(proposalId: UInt64, approver: Address)
+    access(all) event RewardDistributed(user: Address, amount: UFix64, reason: String)
+    access(all) event ReputationUpdated(user: Address, newReputation: UInt64)
+    access(all) event WorkflowTemplateAdopted(templateId: UInt64, daoId: UInt64)
+    access(all) event DAOCreated(id: UInt64, name: String, creator: Address)
+    access(all) event WorkflowShared(daoId: UInt64, workflowId: UInt64, sharedBy: Address)
 
     // Proposal types
-    pub enum ProposalType: UInt8 {
-        pub case WorkflowApproval
-        pub case TemplateAdoption
-        pub case RewardDistribution
-        pub case ParameterChange
-        pub case ContractUpgrade
+    access(all) enum ProposalType: UInt8 {
+        access(all) case WorkflowApproval
+        access(all) case TemplateAdoption
+        access(all) case RewardDistribution
+        access(all) case ParameterChange
+        access(all) case ContractUpgrade
     }
 
     // Proposal struct
-    pub struct Proposal {
-        pub let id: UInt64
-        pub let proposer: Address
-        pub let description: String
-        pub let proposalType: ProposalType
-        pub let targetWorkflowId: UInt64?
-        pub let targetTemplateId: UInt64?
-        pub let rewardRecipient: Address?
-        pub let rewardAmount: UFix64?
-        pub let metadata: {String: String}
-        pub let daoId: UInt64
-        pub let votesFor: UInt64
-        pub let votesAgainst: UInt64
-        pub let executed: Bool
-        pub let deadline: UFix64
-        pub let requiredApprovals: UInt64
-        pub var currentApprovals: UInt64
-        pub let multiSigRequired: Bool
-        pub var multiSigApprovals: {Address: Bool}
-        pub var voters: {Address: Bool} // Track who voted to prevent double voting
+    access(all) struct Proposal {
+        access(all) let id: UInt64
+        access(all) let proposer: Address
+        access(all) let description: String
+        access(all) let proposalType: ProposalType
+        access(all) let targetWorkflowId: UInt64?
+        access(all) let targetTemplateId: UInt64?
+        access(all) let rewardRecipient: Address?
+        access(all) let rewardAmount: UFix64?
+        access(all) let metadata: {String: String}
+        access(all) let daoId: UInt64
+        access(all) let votesFor: UInt64
+        access(all) let votesAgainst: UInt64
+        access(all) let executed: Bool
+        access(all) let deadline: UFix64
+        access(all) let requiredApprovals: UInt64
+        access(all) var currentApprovals: UInt64
+        access(all) let multiSigRequired: Bool
+        access(all) var multiSigApprovals: {Address: Bool}
+        access(all) var voters: {Address: Bool} // Track who voted to prevent double voting
 
         init(
             id: UInt64,
@@ -87,22 +87,22 @@ pub contract FlowFiDAOManager {
             self.voters = {}
         }
 
-        pub fun addMultiSigApproval(approver: Address) {
+        access(all) fun addMultiSigApproval(approver: Address) {
             if !self.multiSigApprovals.containsKey(approver) {
                 self.multiSigApprovals[approver] = true
                 self.currentApprovals = self.currentApprovals + 1
             }
         }
 
-        pub fun hasMultiSigApproval(approver: Address): Bool {
+        access(all) fun hasMultiSigApproval(approver: Address): Bool {
             return self.multiSigApprovals[approver] ?? false
         }
 
-        pub fun isMultiSigApproved(): Bool {
+        access(all) fun isMultiSigApproved(): Bool {
             return !self.multiSigRequired || self.currentApprovals >= self.requiredApprovals
         }
 
-        pub fun castVote(voter: Address, vote: Bool, weight: UInt64 = 1) {
+        access(all) fun castVote(voter: Address, vote: Bool, weight: UInt64 = 1) {
             pre {
                 !self.voters.containsKey(voter): "Already voted"
                 getCurrentBlock().timestamp <= self.deadline: "Voting period ended"
@@ -117,29 +117,29 @@ pub contract FlowFiDAOManager {
             }
         }
 
-        pub fun canExecute(): Bool {
+        access(all) fun canExecute(): Bool {
             return !self.executed &&
                    getCurrentBlock().timestamp > self.deadline &&
                    self.isMultiSigApproved()
         }
 
-        pub fun isApproved(): Bool {
+        access(all) fun isApproved(): Bool {
             return self.votesFor > self.votesAgainst
         }
     }
 
     // DAO struct
-    pub struct DAO {
-        pub let id: UInt64
-        pub let name: String
-        pub let creator: Address
-        pub var members: {Address: Bool}
-        pub var reputation: {Address: UInt64}
-        pub var treasury: UFix64
-        pub var multiSigThreshold: UInt64
-        pub var active: Bool
-        pub var sharedWorkflows: [UInt64] // IDs of shared workflows
-        pub var adoptedTemplates: [UInt64] // IDs of adopted templates
+    access(all) struct DAO {
+        access(all) let id: UInt64
+        access(all) let name: String
+        access(all) let creator: Address
+        access(all) var members: {Address: Bool}
+        access(all) var reputation: {Address: UInt64}
+        access(all) var treasury: UFix64
+        access(all) var multiSigThreshold: UInt64
+        access(all) var active: Bool
+        access(all) var sharedWorkflows: [UInt64] // IDs of shared workflows
+        access(all) var adoptedTemplates: [UInt64] // IDs of adopted templates
 
         init(id: UInt64, name: String, creator: Address, multiSigThreshold: UInt64) {
             self.id = id
@@ -154,34 +154,34 @@ pub contract FlowFiDAOManager {
             self.adoptedTemplates = []
         }
 
-        pub fun addMember(member: Address) {
+        access(all) fun addMember(member: Address) {
             self.members[member] = true
             self.reputation[member] = 10 // Starting reputation
         }
 
-        pub fun updateReputation(member: Address, change: Int64) {
+        access(all) fun updateReputation(member: Address, change: Int64) {
             let current = self.reputation[member] ?? 0
             let newRep = UInt64(Int64(current) + change)
             self.reputation[member] = newRep > 0 ? newRep : 0
         }
 
-        pub fun getMemberReputation(member: Address): UInt64 {
+        access(all) fun getMemberReputation(member: Address): UInt64 {
             return self.reputation[member] ?? 0
         }
 
-        pub fun addSharedWorkflow(workflowId: UInt64) {
+        access(all) fun addSharedWorkflow(workflowId: UInt64) {
             if !self.sharedWorkflows.contains(workflowId) {
                 self.sharedWorkflows.append(workflowId)
             }
         }
 
-        pub fun adoptTemplate(templateId: UInt64) {
+        access(all) fun adoptTemplate(templateId: UInt64) {
             if !self.adoptedTemplates.contains(templateId) {
                 self.adoptedTemplates.append(templateId)
             }
         }
 
-        pub fun distributeReward(recipient: Address, amount: UFix64, reason: String) {
+        access(all) fun distributeReward(recipient: Address, amount: UFix64, reason: String) {
             pre {
                 self.treasury >= amount: "Insufficient treasury funds"
                 self.members[recipient] != nil: "Recipient not a member"
@@ -194,14 +194,14 @@ pub contract FlowFiDAOManager {
     }
 
     // Storage
-    pub var proposals: {UInt64: Proposal}
-    pub var nextProposalId: UInt64
-    pub var daos: {UInt64: DAO}
-    pub var nextDaoId: UInt64
-    pub var userReputation: {Address: UInt64}
-    pub var totalProposals: UInt64
-    pub var executedProposals: UInt64
-    pub var members: {Address: Bool} // Global members across all DAOs
+    access(all) var proposals: {UInt64: Proposal}
+    access(all) var nextProposalId: UInt64
+    access(all) var daos: {UInt64: DAO}
+    access(all) var nextDaoId: UInt64
+    access(all) var userReputation: {Address: UInt64}
+    access(all) var totalProposals: UInt64
+    access(all) var executedProposals: UInt64
+    access(all) var members: {Address: Bool} // Global members across all DAOs
 
     // Initialize contract
     init() {
@@ -216,12 +216,12 @@ pub contract FlowFiDAOManager {
     }
 
     // Add member
-    pub fun addMember(member: Address) {
+    access(all) fun addMember(member: Address) {
         self.members[member] = true
     }
 
     // Create DAO
-    pub fun createDAO(name: String, creator: Address, multiSigThreshold: UInt64): UInt64 {
+    access(all) fun createDAO(name: String, creator: Address, multiSigThreshold: UInt64): UInt64 {
         let daoId = self.nextDaoId
         self.nextDaoId = self.nextDaoId + 1
 
@@ -236,7 +236,7 @@ pub contract FlowFiDAOManager {
     }
 
     // Create proposal
-    pub fun createProposal(
+    access(all) fun createProposal(
         daoId: UInt64,
         proposer: Address,
         description: String,
@@ -283,7 +283,7 @@ pub contract FlowFiDAOManager {
     }
 
     // Vote on proposal
-    pub fun vote(proposalId: UInt64, voter: Address, vote: Bool) {
+    access(all) fun vote(proposalId: UInt64, voter: Address, vote: Bool) {
         pre {
             self.proposals[proposalId] != nil: "Proposal does not exist"
             self.daos[self.proposals[proposalId]!.daoId] != nil: "DAO does not exist"
@@ -300,7 +300,7 @@ pub contract FlowFiDAOManager {
     }
 
     // Multi-sig approval
-    pub fun approveMultiSig(proposalId: UInt64, approver: Address) {
+    access(all) fun approveMultiSig(proposalId: UInt64, approver: Address) {
         pre {
             self.proposals[proposalId] != nil: "Proposal does not exist"
             self.daos[self.proposals[proposalId]!.daoId] != nil: "DAO does not exist"
@@ -313,7 +313,7 @@ pub contract FlowFiDAOManager {
     }
 
     // Execute proposal
-    pub fun executeProposal(proposalId: UInt64): Bool {
+    access(all) fun executeProposal(proposalId: UInt64): Bool {
         pre {
             self.proposals[proposalId] != nil: "Proposal does not exist"
             !self.proposals[proposalId]!.executed: "Proposal already executed"
@@ -393,12 +393,12 @@ pub contract FlowFiDAOManager {
     }
 
     // Get proposal
-    pub fun getProposal(id: UInt64): Proposal? {
+    access(all) fun getProposal(id: UInt64): Proposal? {
         return self.proposals[id]
     }
 
     // Get all proposals
-    pub fun getAllProposals(): {UInt64: Proposal} {
+    access(all) fun getAllProposals(): {UInt64: Proposal} {
         return self.proposals
     }
 }
