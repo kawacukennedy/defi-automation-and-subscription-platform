@@ -8,6 +8,7 @@ import { WalletProvider } from "@/lib/WalletContext";
 import Link from "next/link";
 import { useState, useEffect, Suspense } from "react";
 import dynamicImport from 'next/dynamic';
+import { motion } from 'framer-motion';
 import ErrorBoundary from "@/components/ErrorBoundary";
 import Loading from "@/components/Loading";
 import { ThemeProvider, useTheme } from "@/lib/ThemeContext";
