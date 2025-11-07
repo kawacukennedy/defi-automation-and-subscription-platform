@@ -6,13 +6,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useWallet } from '@/lib/WalletContext';
 import { useToast } from '@/lib/ToastContext';
 import Loading from '@/components/Loading';
+import WalletConnectButton from '@/components/WalletConnectButton';
 
 export const dynamic = 'force-dynamic';
 
 type Step = 'action' | 'details' | 'triggers' | 'review';
 
 export default function CreateWorkflow() {
-  const { user } = useWallet();
+  const { user, connected } = useWallet();
   const { success, error: showError } = useToast();
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState<Step>('action');
@@ -46,6 +47,16 @@ export default function CreateWorkflow() {
     { id: 'mint_nft', name: 'Mint NFT', desc: 'Create NFT rewards', icon: '🎨' },
     { id: 'dao_vote', name: 'DAO Vote', desc: 'Automated governance voting', icon: '🗳️' },
   ];
+
+  // Check if action is pre-selected from URL
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const actionParam = urlParams.get('action');
+    if (actionParam && actions.find(a => a.id === actionParam)) {
+      setFormData(prev => ({ ...prev, action: actionParam }));
+      setCurrentStep('details');
+    }
+  }, []);
 
   const tokens = ['FLOW', 'USDC', 'FUSD', 'USDT'];
 
@@ -85,10 +96,11 @@ export default function CreateWorkflow() {
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-    if (!formData.name.trim()) newErrors.name = 'Workflow name is required';
+    if (!formData.name.trim()) newErrors.name = `${formData.action === 'subscription' ? 'Subscription' : 'Workflow'} name is required`;
     if (!formData.action) newErrors.action = 'Please select an action';
     if (!formData.amount || parseFloat(formData.amount) <= 0) newErrors.amount = 'Valid amount is required';
-    if (formData.action === 'send' && !formData.recipient) newErrors.recipient = 'Recipient address is required';
+    if ((formData.action === 'send' || formData.action === 'subscription') && !formData.recipient) newErrors.recipient = 'Recipient address is required';
+    if (formData.action === 'subscription' && !formData.interval) newErrors.interval = 'Payment interval is required';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -101,7 +113,13 @@ export default function CreateWorkflow() {
 
     setLoading(true);
     try {
-      const response = await fetch('/api/workflows', {
+      const apiEndpoint = formData.action === 'subscription' ? '/api/subscriptions' : '/api/workflows';
+      const successMessage = formData.action === 'subscription'
+        ? 'Subscription Created!'
+        : 'Workflow Created!';
+      const redirectPath = formData.action === 'subscription' ? '/subscriptions' : '/dashboard';
+
+      const response = await fetch(apiEndpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -112,18 +130,38 @@ export default function CreateWorkflow() {
 
       const result = await response.json();
       if (result.success) {
-        success('Workflow Created!', 'Your workflow has been deployed successfully.');
-        router.push('/dashboard');
+        success(successMessage, `Your ${formData.action} has been deployed successfully.`);
+        router.push(redirectPath);
       } else {
-        showError('Deployment Failed', result.error || 'Failed to create workflow');
+        showError('Deployment Failed', result.error || `Failed to create ${formData.action}`);
       }
     } catch (err) {
       console.error('Error:', err);
-      showError('Deployment Failed', 'Failed to create workflow. Please try again.');
+      showError('Deployment Failed', `Failed to create ${formData.action}. Please try again.`);
     } finally {
       setLoading(false);
     }
   };
+
+  if (!connected) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-green-900 flex items-center justify-center">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center"
+        >
+          <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
+            Connect Your Wallet
+          </h1>
+          <p className="text-gray-300 mb-8 max-w-md">
+            Connect your Flow wallet to create automated DeFi workflows.
+          </p>
+          <WalletConnectButton />
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-green-900 text-white">
@@ -318,23 +356,45 @@ export default function CreateWorkflow() {
                 </motion.div>
               </div>
 
-              {formData.action === 'send' && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.5 }}
-                >
-                  <label className="block mb-2 font-semibold">Recipient Address</label>
-                  <input
-                    type="text"
-                    className="w-full p-3 bg-white/10 border border-white/20 rounded-lg focus:border-green-400 focus:outline-none transition-colors"
-                    placeholder="Enter Flow address"
-                    value={formData.recipient}
-                    onChange={(e) => setFormData(prev => ({ ...prev, recipient: e.target.value }))}
-                  />
-                  {errors.recipient && <p className="text-red-400 mt-1">{errors.recipient}</p>}
-                </motion.div>
-              )}
+               {(formData.action === 'send' || formData.action === 'subscription') && (
+                 <motion.div
+                   initial={{ opacity: 0, y: 20 }}
+                   animate={{ opacity: 1, y: 0 }}
+                   transition={{ duration: 0.5, delay: 0.5 }}
+                 >
+                   <label className="block mb-2 font-semibold">
+                     {formData.action === 'subscription' ? 'Recipient Address' : 'Recipient Address'}
+                   </label>
+                   <input
+                     type="text"
+                     className="w-full p-3 bg-white/10 border border-white/20 rounded-lg focus:border-green-400 focus:outline-none transition-colors"
+                     placeholder="Enter Flow address"
+                     value={formData.recipient}
+                     onChange={(e) => setFormData(prev => ({ ...prev, recipient: e.target.value }))}
+                   />
+                   {errors.recipient && <p className="text-red-400 mt-1">{errors.recipient}</p>}
+                 </motion.div>
+               )}
+
+               {formData.action === 'subscription' && (
+                 <motion.div
+                   initial={{ opacity: 0, y: 20 }}
+                   animate={{ opacity: 1, y: 0 }}
+                   transition={{ duration: 0.5, delay: 0.6 }}
+                 >
+                   <label className="block mb-2 font-semibold">Payment Interval</label>
+                   <select
+                     className="w-full p-3 bg-white/10 border border-white/20 rounded-lg focus:border-green-400 focus:outline-none transition-colors"
+                     value={formData.interval || 86400}
+                     onChange={(e) => setFormData(prev => ({ ...prev, interval: parseInt(e.target.value) }))}
+                   >
+                     <option value={3600}>Every hour</option>
+                     <option value={86400}>Daily</option>
+                     <option value={604800}>Weekly</option>
+                     <option value={2592000}>Monthly</option>
+                   </select>
+                 </motion.div>
+               )}
             </div>
           )}
 
@@ -412,26 +472,45 @@ export default function CreateWorkflow() {
                     <span className="text-gray-400">Name:</span>
                     <span className="ml-2 font-medium">{formData.name || 'Untitled Workflow'}</span>
                   </div>
-                  <div>
-                    <span className="text-gray-400">Action:</span>
-                    <span className="ml-2 font-medium">{actions.find(a => a.id === formData.action)?.name}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-400">Token:</span>
-                    <span className="ml-2 font-medium">{formData.token}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-400">Amount:</span>
-                    <span className="ml-2 font-medium">{formData.amount} {formData.token}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-400">Frequency:</span>
-                    <span className="ml-2 font-medium capitalize">{formData.frequency}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-400">Trigger:</span>
-                    <span className="ml-2 font-medium capitalize">{formData.trigger}</span>
-                  </div>
+                   <div>
+                     <span className="text-gray-400">Type:</span>
+                     <span className="ml-2 font-medium">{actions.find(a => a.id === formData.action)?.name}</span>
+                   </div>
+                   <div>
+                     <span className="text-gray-400">Token:</span>
+                     <span className="ml-2 font-medium">{formData.token}</span>
+                   </div>
+                   <div>
+                     <span className="text-gray-400">Amount:</span>
+                     <span className="ml-2 font-medium">{formData.amount} {formData.token}</span>
+                   </div>
+                   {formData.action === 'subscription' ? (
+                     <>
+                       <div>
+                         <span className="text-gray-400">Recipient:</span>
+                         <span className="ml-2 font-medium">{formData.recipient?.slice(0, 6)}...{formData.recipient?.slice(-4)}</span>
+                       </div>
+                       <div>
+                         <span className="text-gray-400">Interval:</span>
+                         <span className="ml-2 font-medium">
+                           {formData.interval === 3600 ? 'Hourly' :
+                            formData.interval === 86400 ? 'Daily' :
+                            formData.interval === 604800 ? 'Weekly' : 'Monthly'}
+                         </span>
+                       </div>
+                     </>
+                   ) : (
+                     <>
+                       <div>
+                         <span className="text-gray-400">Frequency:</span>
+                         <span className="ml-2 font-medium capitalize">{formData.frequency}</span>
+                       </div>
+                       <div>
+                         <span className="text-gray-400">Trigger:</span>
+                         <span className="ml-2 font-medium capitalize">{formData.trigger}</span>
+                       </div>
+                     </>
+                   )}
                   {formData.schedule && (
                     <div className="md:col-span-2">
                       <span className="text-gray-400">Next Run:</span>

@@ -8,7 +8,7 @@ const axios = require('axios');
 class NotificationService {
   constructor() {
     // Initialize email transporter
-    this.emailTransporter = nodemailer.createTransporter({
+    this.emailTransporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST || 'smtp.gmail.com',
       port: process.env.SMTP_PORT || 587,
       secure: false,
@@ -97,6 +97,32 @@ class NotificationService {
       return notification;
     } catch (error) {
       console.error('Error marking notification as read:', error);
+      throw error;
+    }
+  }
+
+  async markAllAsRead(userAddress) {
+    try {
+      await Notification.updateMany(
+        { userAddress, read: false },
+        { $set: { read: true, readAt: new Date() } }
+      );
+      return true;
+    } catch (error) {
+      console.error('Error marking all notifications as read:', error);
+      throw error;
+    }
+  }
+
+  async deleteNotification(notificationId, userAddress) {
+    try {
+      const notification = await Notification.findOneAndDelete({
+        _id: notificationId,
+        userAddress
+      });
+      return notification;
+    } catch (error) {
+      console.error('Error deleting notification:', error);
       throw error;
     }
   }

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { useWallet } from '@/lib/WalletContext';
 import Loading from '@/components/Loading';
+import WalletConnectButton from '@/components/WalletConnectButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,7 +31,7 @@ interface Analytics {
 }
 
 export default function Dashboard() {
-  const { user } = useWallet();
+  const { user, connected } = useWallet();
   const [workflows, setWorkflows] = useState<Workflow[]>([]);
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
   const [loading, setLoading] = useState(true);
@@ -84,6 +85,26 @@ export default function Dashboard() {
     </div>
   );
 
+  if (!connected) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-green-900 flex items-center justify-center">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center"
+        >
+          <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
+            Connect Your Wallet
+          </h1>
+          <p className="text-gray-300 mb-8 max-w-md">
+            Connect your Flow wallet to access your dashboard and manage your automated DeFi workflows.
+          </p>
+          <WalletConnectButton />
+        </motion.div>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-green-900 flex items-center justify-center">
@@ -127,15 +148,17 @@ export default function Dashboard() {
           className="fixed md:relative z-10 w-64 min-h-screen bg-black/30 backdrop-blur-md border-r border-white/10 p-6"
         >
           <nav className="space-y-4">
-            {[
-              { href: '/dashboard', label: 'Dashboard', icon: '📊' },
-              { href: '/create-workflow', label: 'Create Workflow', icon: '➕' },
-              { href: '/analytics', label: 'Analytics', icon: '📈' },
-              { href: '/community', label: 'Community', icon: '👥' },
-              { href: '/leaderboard', label: 'Leaderboard', icon: '🏆' },
-              { href: '/settings', label: 'Settings', icon: '⚙️' },
-              { href: '/admin', label: 'Admin', icon: '🛠️' },
-            ].map((item) => (
+             {[
+               { href: '/dashboard', label: 'Dashboard', icon: '📊' },
+               { href: '/create-workflow', label: 'Create Workflow', icon: '➕' },
+               { href: '/subscriptions', label: 'Subscriptions', icon: '🔄' },
+               { href: '/nfts', label: 'NFT Badges', icon: '🏆' },
+               { href: '/analytics', label: 'Analytics', icon: '📈' },
+               { href: '/community', label: 'Community', icon: '👥' },
+               { href: '/leaderboard', label: 'Leaderboard', icon: '🏆' },
+               { href: '/settings', label: 'Settings', icon: '⚙️' },
+               { href: '/admin', label: 'Admin', icon: '🛠️' },
+             ].map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
@@ -186,10 +209,10 @@ export default function Dashboard() {
             </h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[
-                { label: 'Create Workflow', icon: '➕', href: '/create-workflow', color: 'from-green-400 to-green-600' },
-                { label: 'View Analytics', icon: '📈', href: '/analytics', color: 'from-blue-400 to-blue-600' },
-                { label: 'Community', icon: '👥', href: '/community', color: 'from-purple-400 to-purple-600' },
-                { label: 'Settings', icon: '⚙️', href: '/settings', color: 'from-yellow-400 to-yellow-600' }
+               { label: 'Create Workflow', icon: '➕', href: '/create-workflow', color: 'from-green-400 to-green-600' },
+               { label: 'Subscriptions', icon: '🔄', href: '/subscriptions', color: 'from-orange-400 to-red-500' },
+               { label: 'NFT Badges', icon: '🏆', href: '/nfts', color: 'from-yellow-400 to-orange-500' },
+               { label: 'Analytics', icon: '📈', href: '/analytics', color: 'from-blue-400 to-blue-600' }
               ].map((action, index) => (
                 <Link key={action.href} href={action.href}>
                   <motion.div

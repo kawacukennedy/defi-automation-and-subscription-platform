@@ -1,8 +1,8 @@
 const validateWorkflowData = (req, res, next) => {
   const { action, token, amount, trigger } = req.body;
 
-  const validActions = ['stake', 'unstake', 'swap', 'lend', 'borrow', 'repay'];
-  const validTriggers = ['manual', 'time', 'price', 'balance'];
+  const validActions = ['stake', 'swap', 'send', 'mint_nft', 'dao_vote', 'subscription'];
+  const validTriggers = ['manual', 'time', 'event'];
 
   if (!action || !validActions.includes(action)) {
     return res.status(400).json({ error: 'Invalid or missing action' });

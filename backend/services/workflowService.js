@@ -1,7 +1,8 @@
 const Workflow = require('../models/Workflow');
 const User = require('../models/User');
 const Notification = require('../models/Notification');
-const { executeTransaction, executeScript } = require('./flowService');
+const { executeTransaction, executeScript, createWorkflowOnChain, executeWorkflowOnChain } = require('./flowService');
+const NFTService = require('./nftService');
 
 class WorkflowService {
   async createWorkflow(workflowData) {
@@ -32,6 +33,9 @@ class WorkflowService {
 
       // Send notification
       await this.sendWorkflowCreatedNotification(workflow);
+
+      // Check for achievements
+      await NFTService.checkAndAwardAchievements(workflowData.userAddress);
 
       return workflow;
     } catch (error) {
@@ -80,6 +84,11 @@ class WorkflowService {
 
       // Send notification
       await this.sendExecutionNotification(workflow, result);
+
+      // Check for achievements after successful execution
+      if (result.success) {
+        await NFTService.checkAndAwardAchievements(workflow.userAddress);
+      }
 
       return result;
     } catch (error) {
@@ -182,16 +191,41 @@ class WorkflowService {
   }
 
   async deployWorkflowToBlockchain(workflow) {
-    // Placeholder for blockchain deployment
-    // This would interact with the Cadence contracts
-    console.log('Deploying workflow to blockchain:', workflow.workflowId);
+    try {
+      const result = await createWorkflowOnChain({
+        action: workflow.action,
+        token: workflow.token,
+        amount: workflow.amount,
+        schedule: workflow.frequency,
+        trigger: workflow.trigger,
+        metadata: workflow.metadata || {},
+        composableWorkflows: [], // TODO: Implement composable workflows
+        maxRetries: 3,
+        gasLimit: 100000
+      });
+
+      console.log('Workflow deployed to blockchain:', workflow.workflowId, result.transactionId);
+      return result;
+    } catch (error) {
+      console.error('Failed to deploy workflow to blockchain:', error);
+      throw error;
+    }
   }
 
   async executeWorkflowOnBlockchain(workflow) {
-    // Placeholder for blockchain execution
-    // This would call the Forte Actions
-    console.log('Executing workflow on blockchain:', workflow.workflowId);
-    return { success: Math.random() > 0.1, gasUsed: Math.floor(Math.random() * 100000) };
+    try {
+      const result = await executeWorkflowOnChain(workflow.workflowId);
+      console.log('Workflow executed on blockchain:', workflow.workflowId, result.transactionId);
+
+      // Check transaction status
+      const success = result.status === 4; // 4 = SEALED in Flow
+      const gasUsed = 50000; // Mock gas usage - would need to parse from events
+
+      return { success, gasUsed, transactionId: result.transactionId };
+    } catch (error) {
+      console.error('Failed to execute workflow on blockchain:', error);
+      return { success: false, gasUsed: 0, error: error.message };
+    }
   }
 
   async sendWorkflowCreatedNotification(workflow) {

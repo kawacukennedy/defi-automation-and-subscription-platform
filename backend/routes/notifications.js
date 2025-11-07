@@ -72,22 +72,22 @@ router.patch('/:notificationId/read', async (req, res) => {
   }
 });
 
-// Mark all notifications as read
-router.patch('/read-all', async (req, res) => {
-  try {
-    // Implementation would update all unread notifications
-    res.json({
-      success: true,
-      message: 'All notifications marked as read'
-    });
-  } catch (error) {
-    console.error('Error marking all notifications as read:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to mark notifications as read'
-    });
-  }
-});
+ // Mark all notifications as read
+ router.patch('/read-all', async (req, res) => {
+   try {
+     await notificationService.markAllAsRead(req.user.address);
+     res.json({
+       success: true,
+       message: 'All notifications marked as read'
+     });
+   } catch (error) {
+     console.error('Error marking all notifications as read:', error);
+     res.status(500).json({
+       success: false,
+       error: 'Failed to mark notifications as read'
+     });
+   }
+ });
 
 // Update notification preferences
 router.patch('/preferences', async (req, res) => {
@@ -167,21 +167,32 @@ router.post('/test', async (req, res) => {
   }
 });
 
-// Delete notification
-router.delete('/:notificationId', async (req, res) => {
-  try {
-    // Implementation would go here
-    res.json({
-      success: true,
-      message: 'Notification deleted'
-    });
-  } catch (error) {
-    console.error('Error deleting notification:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to delete notification'
-    });
-  }
-});
+ // Delete notification
+ router.delete('/:notificationId', async (req, res) => {
+   try {
+     const notification = await notificationService.deleteNotification(
+       req.params.notificationId,
+       req.user.address
+     );
+
+     if (!notification) {
+       return res.status(404).json({
+         success: false,
+         error: 'Notification not found'
+       });
+     }
+
+     res.json({
+       success: true,
+       message: 'Notification deleted'
+     });
+   } catch (error) {
+     console.error('Error deleting notification:', error);
+     res.status(500).json({
+       success: false,
+       error: 'Failed to delete notification'
+     });
+   }
+ });
 
 module.exports = router;

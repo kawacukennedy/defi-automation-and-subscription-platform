@@ -16,6 +16,7 @@ import { ToastProvider } from "@/lib/ToastContext";
 import ThemeToggle from "@/components/ThemeToggle";
 import SearchBar from "@/components/SearchBar";
 import ToastContainer from "@/components/ToastContainer";
+import WalletConnectButton from "@/components/WalletConnectButton";
 
 // Lazy load heavy components
 const MotionDiv = dynamicImport(() => import('framer-motion').then(mod => mod.motion.div), {
@@ -151,13 +152,15 @@ function LayoutContent({
               </Link>
               <div className="flex items-center space-x-6">
                 <div className="hidden md:flex space-x-4">
-                    <Link href="/dashboard" className={`hover:text-green-400 transition-colors ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Dashboard</Link>
-                    <Link href="/create-workflow" className={`hover:text-green-400 transition-colors ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Create Workflow</Link>
-                    <Link href="/analytics" className={`hover:text-green-400 transition-colors ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Analytics</Link>
-                    <Link href="/community" className={`hover:text-green-400 transition-colors ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Community</Link>
-                    <Link href="/leaderboard" className={`hover:text-green-400 transition-colors ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Leaderboard</Link>
-                    <Link href="/settings" className={`hover:text-green-400 transition-colors ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Settings</Link>
-                    <Link href="/contact" className={`hover:text-green-400 transition-colors ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Contact</Link>
+                     <Link href="/dashboard" className={`hover:text-green-400 transition-colors ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Dashboard</Link>
+                     <Link href="/create-workflow" className={`hover:text-green-400 transition-colors ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Create Workflow</Link>
+                     <Link href="/subscriptions" className={`hover:text-green-400 transition-colors ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Subscriptions</Link>
+                     <Link href="/nfts" className={`hover:text-green-400 transition-colors ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>NFTs</Link>
+                     <Link href="/analytics" className={`hover:text-green-400 transition-colors ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Analytics</Link>
+                     <Link href="/community" className={`hover:text-green-400 transition-colors ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Community</Link>
+                     <Link href="/leaderboard" className={`hover:text-green-400 transition-colors ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Leaderboard</Link>
+                     <Link href="/settings" className={`hover:text-green-400 transition-colors ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Settings</Link>
+                     <Link href="/contact" className={`hover:text-green-400 transition-colors ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Contact</Link>
                 </div>
 
                  {/* Search */}
@@ -165,6 +168,9 @@ function LayoutContent({
 
                 {/* Theme Toggle */}
                 <ThemeToggle />
+
+                {/* Wallet Connect */}
+                <WalletConnectButton />
 
                 {/* Mobile Menu Button */}
                 <div className="md:hidden">
@@ -241,15 +247,17 @@ function LayoutContent({
                   </MotionButton>
                </div>
                <nav className="space-y-4">
-                  {[
-                    { href: '/dashboard', label: 'Dashboard' },
-                    { href: '/create-workflow', label: 'Create Workflow' },
-                    { href: '/analytics', label: 'Analytics' },
-                    { href: '/community', label: 'Community' },
-                    { href: '/leaderboard', label: 'Leaderboard' },
-                    { href: '/settings', label: 'Settings' },
-                    { href: '/contact', label: 'Contact' },
-                  ].map((item) => (
+                   {[
+                     { href: '/dashboard', label: 'Dashboard' },
+                     { href: '/create-workflow', label: 'Create Workflow' },
+                     { href: '/subscriptions', label: 'Subscriptions' },
+                     { href: '/nfts', label: 'NFTs' },
+                     { href: '/analytics', label: 'Analytics' },
+                     { href: '/community', label: 'Community' },
+                     { href: '/leaderboard', label: 'Leaderboard' },
+                     { href: '/settings', label: 'Settings' },
+                     { href: '/contact', label: 'Contact' },
+                   ].map((item) => (
                    <Link
                      key={item.href}
                      href={item.href}

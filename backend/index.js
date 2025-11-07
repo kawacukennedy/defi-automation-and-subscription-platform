@@ -3,11 +3,37 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const helmet = require('helmet');
 const dotenv = require('dotenv');
-const rateLimit = require('express-rate-limit');
+const winston = require('winston');
+const redis = require('redis');
+const WebSocket = require('ws');
+const http = require('http');
 
 dotenv.config();
 
+// Logger setup
+const logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.errors({ stack: true }),
+    winston.format.json()
+  ),
+  defaultMeta: { service: 'flowfi-backend' },
+  transports: [
+    new winston.transports.File({ filename: 'error.log', level: 'error' }),
+    new winston.transports.File({ filename: 'combined.log' }),
+  ],
+});
+
+if (process.env.NODE_ENV !== 'production') {
+  logger.add(new winston.transports.Console({
+    format: winston.format.simple(),
+  }));
+}
+
 const app = express();
+const server = http.createServer(app);
+const wss = new WebSocket.Server({ server });
 
 // Security middleware
 app.use(helmet({
@@ -22,14 +48,6 @@ app.use(helmet({
     },
   },
 }));
-
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 1000, // limit each IP to 1000 requests per windowMs
-  message: 'Too many requests from this IP, please try again later.',
-});
-app.use(limiter);
 
 // CORS configuration
 app.use(cors({
@@ -46,11 +64,12 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/api/workflows', require('./routes/workflows'));
 app.use('/api/analytics', require('./routes/analytics'));
 app.use('/api/notifications', require('./routes/notifications'));
+app.use('/api/subscriptions', require('./routes/subscriptions'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/community', require('./routes/community'));
 
 // Health check endpoint
-app.get('/health', async (req, res) => {
+app.get('/api/health', async (req, res) => {
   try {
     // Check database connection
     const dbStatus = mongoose.connection.readyState === 1 ? 'healthy' : 'unhealthy';
@@ -86,7 +105,7 @@ app.use('*', (req, res) => {
 
 // Global error handler
 app.use((error, req, res, next) => {
-  console.error('Global error:', error);
+  logger.error('Global error:', error);
   res.status(500).json({
     error: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message
   });
@@ -97,13 +116,8 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/flowfi', 
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
-.then(() => console.log('MongoDB connected'))
-.catch(err => console.error('MongoDB connection error:', err));
-
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+.then(() => logger.info('MongoDB connected'))
+.catch(err => logger.error('MongoDB connection error:', err));
 
 // Redis connection
 const redisClient = redis.createClient({
@@ -125,25 +139,8 @@ wss.on('connection', (ws) => {
   });
 });
 
-// Routes
-const workflowRoutes = require('./routes/workflows');
-const analyticsRoutes = require('./routes/analytics');
-const notificationRoutes = require('./routes/notifications');
-const adminRoutes = require('./routes/admin');
-const communityRoutes = require('./routes/community');
-
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', timestamp: new Date().toISOString() });
-});
-
-app.use('/api/workflows', workflowRoutes);
-app.use('/api/analytics', analyticsRoutes);
-app.use('/api/notifications', notificationRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api/community', communityRoutes);
-
 // Start server
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   logger.info(`Server running on port ${PORT}`);
 });

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useWallet } from '@/lib/WalletContext';
+import WalletConnectButton from '@/components/WalletConnectButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,12 +33,17 @@ interface AnalyticsData {
     failed: number;
     successRate: number;
   };
-  executionTrends: { date: string; executions: number; success: number }[];
+  executionTrends: { date: string; executions: number; success: number; failed?: number }[];
   adoptionMetrics: { totalWorkflows: number; activeUsers: number; growth: number };
+  predictive?: {
+    predictions: { [key: string]: any };
+    confidence: number;
+    recommendations: any[];
+  };
 }
 
 export default function Analytics() {
-  const { user } = useWallet();
+  const { user, connected } = useWallet();
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
@@ -46,6 +52,7 @@ export default function Analytics() {
     action: 'all'
   });
   const [exportFormat, setExportFormat] = useState<'csv' | 'json'>('csv');
+  const [predictiveData, setPredictiveData] = useState<any>(null);
 
   useEffect(() => {
     if (user) {
@@ -55,29 +62,47 @@ export default function Analytics() {
 
   const fetchAnalytics = async () => {
     try {
-      // Mock data - in real app, fetch from API
-      const mockData: AnalyticsData = {
-        tokenBalances: { FLOW: 100.5, USDC: 250.0, FUSD: 75.3 },
-        workflowPerformance: {
-          totalExecutions: 1250,
-          successful: 1225,
-          failed: 25,
-          successRate: 98
-        },
-        executionTrends: [
-          { date: '2024-01-01', executions: 45, success: 44 },
-          { date: '2024-01-02', executions: 52, success: 51 },
-          { date: '2024-01-03', executions: 38, success: 37 },
-          { date: '2024-01-04', executions: 61, success: 60 },
-          { date: '2024-01-05', executions: 49, success: 48 },
-        ],
-        adoptionMetrics: {
-          totalWorkflows: 150,
-          activeUsers: 89,
-          growth: 12.5
-        }
-      };
-      setData(mockData);
+      const [analyticsResponse, predictiveResponse] = await Promise.all([
+        fetch('/api/analytics', {
+          headers: { 'x-user-address': user?.addr || '' }
+        }),
+        fetch('/api/analytics/predictive', {
+          headers: { 'x-user-address': user?.addr || '' }
+        })
+      ]);
+
+      const analyticsResult = await analyticsResponse.json();
+      const predictiveResult = await predictiveResponse.json();
+
+      if (analyticsResult.success) {
+        // Transform API data to match component interface
+        const apiData = analyticsResult.data;
+        const transformedData: AnalyticsData = {
+          tokenBalances: { FLOW: 100.5, USDC: 250.0, FUSD: 75.3 }, // Mock for now - would come from wallet integration
+          workflowPerformance: {
+            totalExecutions: apiData.reduce((sum: number, day: any) => sum + (day.metrics?.totalExecutions || 0), 0),
+            successful: apiData.reduce((sum: number, day: any) => sum + (day.metrics?.successfulExecutions || 0), 0),
+            failed: apiData.reduce((sum: number, day: any) => sum + (day.metrics?.failedExecutions || 0), 0),
+            successRate: apiData.length > 0 ? Math.round(apiData.reduce((sum: number, day: any) => sum + (day.performance?.successRate || 0), 0) / apiData.length) : 0
+          },
+          executionTrends: apiData.slice(-30).map((day: any) => ({ // Last 30 days
+            date: new Date(day.date).toLocaleDateString(),
+            executions: day.metrics?.totalExecutions || 0,
+            success: day.metrics?.successfulExecutions || 0,
+            failed: (day.metrics?.totalExecutions || 0) - (day.metrics?.successfulExecutions || 0)
+          })),
+          adoptionMetrics: {
+            totalWorkflows: apiData.reduce((sum: number, day: any) => sum + (day.metrics?.totalWorkflows || 0), 0),
+            activeUsers: apiData.reduce((sum: number, day: any) => sum + (day.metrics?.activeUsers || 0), 0),
+            growth: apiData.length > 1 ? ((apiData[apiData.length - 1].metrics?.totalWorkflows || 0) - (apiData[0].metrics?.totalWorkflows || 0)) / (apiData[0].metrics?.totalWorkflows || 1) * 100 : 0
+          }
+        };
+        setData(transformedData);
+      }
+
+      if (predictiveResult.success) {
+        setPredictiveData(predictiveResult.data);
+      }
     } catch (error) {
       console.error('Error fetching analytics:', error);
     } finally {
@@ -129,6 +154,26 @@ export default function Analytics() {
     }
     return null;
   };
+
+  if (!connected) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-green-900 flex items-center justify-center">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center"
+        >
+          <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
+            Connect Your Wallet
+          </h1>
+          <p className="text-gray-300 mb-8 max-w-md">
+            Connect your Flow wallet to view analytics and insights.
+          </p>
+          <WalletConnectButton />
+        </motion.div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -398,54 +443,78 @@ export default function Analytics() {
         </motion.div>
 
         {/* Predictive Analytics */}
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.7 }}
-          className="bg-black/20 backdrop-blur-md border border-white/10 p-6 rounded-xl mb-8"
-        >
-          <h2 className="text-xl font-semibold mb-4 bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
-            AI-Powered Predictive Analytics
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              className="text-center p-4 bg-gradient-to-br from-green-400/10 to-green-600/10 rounded-xl border border-green-400/20"
-            >
-              <div className="text-3xl font-bold text-green-400 mb-2">+23%</div>
-              <div className="text-sm text-gray-300 mb-1">Projected Growth</div>
-              <div className="text-xs text-gray-400">Based on current trends</div>
-            </motion.div>
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              className="text-center p-4 bg-gradient-to-br from-blue-400/10 to-blue-600/10 rounded-xl border border-blue-400/20"
-            >
-              <div className="text-3xl font-bold text-blue-400 mb-2">99.2%</div>
-              <div className="text-sm text-gray-300 mb-1">Predicted Success Rate</div>
-              <div className="text-xs text-gray-400">AI confidence: 94%</div>
-            </motion.div>
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              className="text-center p-4 bg-gradient-to-br from-purple-400/10 to-purple-600/10 rounded-xl border border-purple-400/20"
-            >
-              <div className="text-3xl font-bold text-purple-400 mb-2">185</div>
-              <div className="text-sm text-gray-300 mb-1">Workflows Next Month</div>
-              <div className="text-xs text-gray-400">+11% from current</div>
-            </motion.div>
-          </div>
-          <div className="text-center">
-            <p className="text-sm text-gray-400 mb-4">
-              Predictions powered by machine learning analysis of blockchain data and user behavior patterns
-            </p>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="bg-gradient-to-r from-purple-500 to-pink-600 text-white px-6 py-2 rounded-lg text-sm font-medium hover:from-purple-600 hover:to-pink-700 transition-all"
-            >
-              View Detailed Forecast →
-            </motion.button>
-          </div>
-        </motion.div>
+        {predictiveData && (
+          <motion.div
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.7 }}
+            className="bg-black/20 backdrop-blur-md border border-white/10 p-6 rounded-xl mb-8"
+          >
+            <h2 className="text-xl font-semibold mb-4 bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
+              AI-Powered Predictive Analytics
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              {predictiveData.predictions && Object.entries(predictiveData.predictions).slice(0, 3).map(([key, prediction]: [string, any], index) => (
+                <motion.div
+                  key={key}
+                  whileHover={{ scale: 1.05 }}
+                  className={`text-center p-4 bg-gradient-to-br ${
+                    key.includes('totalUsers') ? 'from-green-400/10 to-green-600/10 border-green-400/20' :
+                    key.includes('totalWorkflows') ? 'from-blue-400/10 to-blue-600/10 border-blue-400/20' :
+                    'from-purple-400/10 to-purple-600/10 border-purple-400/20'
+                  } rounded-xl border`}
+                >
+                  <div className={`text-3xl font-bold mb-2 ${
+                    prediction.trend === 'increasing' ? 'text-green-400' :
+                    prediction.trend === 'decreasing' ? 'text-red-400' : 'text-gray-400'
+                  }`}>
+                    {prediction.change > 0 ? '+' : ''}{prediction.change?.toFixed(1) || 0}%
+                  </div>
+                  <div className="text-sm text-gray-300 mb-1">
+                    {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                  </div>
+                  <div className="text-xs text-gray-400">
+                    Predicted: {prediction.predicted || 0} • {prediction.trend || 'stable'}
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+
+            {predictiveData.recommendations && predictiveData.recommendations.length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-3">AI Recommendations</h3>
+                <div className="space-y-2">
+                  {predictiveData.recommendations.map((rec: any, index: number) => (
+                    <div key={index} className={`p-3 rounded-lg border ${
+                      rec.priority === 'high' ? 'bg-red-500/10 border-red-400/20' :
+                      rec.priority === 'medium' ? 'bg-yellow-500/10 border-yellow-400/20' :
+                      'bg-blue-500/10 border-blue-400/20'
+                    }`}>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className={`text-xs px-2 py-1 rounded-full ${
+                          rec.priority === 'high' ? 'bg-red-500/20 text-red-400' :
+                          rec.priority === 'medium' ? 'bg-yellow-500/20 text-yellow-400' :
+                          'bg-blue-500/20 text-blue-400'
+                        }`}>
+                          {rec.priority.toUpperCase()}
+                        </span>
+                        <span className="font-medium">{rec.type}</span>
+                      </div>
+                      <p className="text-sm text-gray-300">{rec.message}</p>
+                      {rec.action && <p className="text-xs text-gray-400 mt-1">💡 {rec.action}</p>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="text-center">
+              <p className="text-sm text-gray-400 mb-4">
+                Predictions powered by machine learning analysis • Confidence: {predictiveData.confidence?.toFixed(1) || 0}%
+              </p>
+            </div>
+          </motion.div>
+        )}
 
         {/* Export */}
         <motion.div

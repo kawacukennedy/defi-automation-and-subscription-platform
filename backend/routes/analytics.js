@@ -126,6 +126,23 @@ router.post('/track-execution', async (req, res) => {
   }
 });
 
+// Get predictive analytics
+router.get('/predictive', async (req, res) => {
+  try {
+    const predictions = await analyticsService.generatePredictiveAnalytics(30);
+    res.json({
+      success: true,
+      data: predictions
+    });
+  } catch (error) {
+    console.error('Error generating predictive analytics:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to generate predictions'
+    });
+  }
+});
+
 function convertToCSV(data) {
   // Simple CSV conversion - in production, use a proper CSV library
   let csv = 'Date,Users,Workflows,Executions\n';

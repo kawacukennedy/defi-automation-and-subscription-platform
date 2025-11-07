@@ -1,5 +1,7 @@
 const express = require('express');
 const router = express.Router();
+const Workflow = require('../models/Workflow');
+const User = require('../models/User');
 const workflowService = require('../services/workflowService');
 const { authenticateUser } = require('../middleware/auth');
 const { validateWorkflowData, sanitizeInput } = require('../middleware/validation');
@@ -151,55 +153,138 @@ router.post('/:workflowId/resume', async (req, res) => {
   }
 });
 
-// Delete workflow
-router.delete('/:workflowId', async (req, res) => {
-  try {
-    // Implementation would go here
-    res.json({
-      success: true,
-      message: 'Workflow deleted successfully'
-    });
-  } catch (error) {
-    console.error('Error deleting workflow:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to delete workflow'
-    });
-  }
-});
+ // Delete workflow
+ router.delete('/:workflowId', async (req, res) => {
+   try {
+     const workflow = await Workflow.findOneAndDelete({
+       workflowId: req.params.workflowId,
+       userAddress: req.user.address
+     });
 
-// Get workflow templates (public workflows)
-router.get('/templates/public', async (req, res) => {
-  try {
-    // Implementation would go here
-    res.json({
-      success: true,
-      data: []
-    });
-  } catch (error) {
-    console.error('Error fetching templates:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch templates'
-    });
-  }
-});
+     if (!workflow) {
+       return res.status(404).json({
+         success: false,
+         error: 'Workflow not found'
+       });
+     }
 
-// Fork workflow template
-router.post('/templates/:templateId/fork', async (req, res) => {
-  try {
-    // Implementation would go here
-    res.status(201).json({
-      success: true,
-      message: 'Workflow forked successfully'
-    });
-  } catch (error) {
-    console.error('Error forking template:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fork template'
-    });
-  }
-});
+     // Update user stats
+     await User.findOneAndUpdate(
+       { address: req.user.address },
+       {
+         $inc: { 'stats.totalWorkflows': -1 },
+         $set: { updatedAt: new Date() }
+       }
+     );
+
+     res.json({
+       success: true,
+       message: 'Workflow deleted successfully'
+     });
+   } catch (error) {
+     console.error('Error deleting workflow:', error);
+     res.status(500).json({
+       success: false,
+       error: 'Failed to delete workflow'
+     });
+   }
+ });
+
+ // Get workflow templates (public workflows)
+ router.get('/templates/public', async (req, res) => {
+   try {
+     const { action, token, limit = 20, page = 1 } = req.query;
+     const filters = { isPublic: true };
+
+     if (action) filters.action = action;
+     if (token) filters.token = token;
+
+     const templates = await Workflow.find(filters)
+       .populate('userAddress', 'username')
+       .sort({ 'stats.forks': -1, 'stats.votes': -1, createdAt: -1 })
+       .limit(parseInt(limit))
+       .skip((parseInt(page) - 1) * parseInt(limit))
+       .select('name description action token userAddress stats tags createdAt');
+
+     const total = await Workflow.countDocuments(filters);
+
+     res.json({
+       success: true,
+       data: templates,
+       pagination: {
+         page: parseInt(page),
+         limit: parseInt(limit),
+         total,
+         pages: Math.ceil(total / parseInt(limit))
+       }
+     });
+   } catch (error) {
+     console.error('Error fetching templates:', error);
+     res.status(500).json({
+       success: false,
+       error: 'Failed to fetch templates'
+     });
+   }
+ });
+
+ // Fork workflow template
+ router.post('/templates/:templateId/fork', async (req, res) => {
+   try {
+     const template = await Workflow.findOne({
+       _id: req.params.templateId,
+       isPublic: true
+     });
+
+     if (!template) {
+       return res.status(404).json({
+         success: false,
+         error: 'Template not found'
+       });
+     }
+
+     // Increment fork count
+     await Workflow.findByIdAndUpdate(req.params.templateId, {
+       $inc: { 'stats.forks': 1 }
+     });
+
+     // Create new workflow from template
+     const newWorkflow = new Workflow({
+       ...template.toObject(),
+       _id: undefined,
+       userAddress: req.user.address,
+       name: `${template.name} (Fork)`,
+       isPublic: false,
+       stats: {
+         forks: 0,
+         votes: 0,
+         views: 0
+       },
+       workflowId: `wf_fork_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+     });
+
+     await newWorkflow.save();
+
+     // Update user stats
+     await User.findOneAndUpdate(
+       { address: req.user.address },
+       {
+         $inc: { 'stats.totalWorkflows': 1, 'stats.activeWorkflows': 1 },
+         $set: { updatedAt: new Date() }
+       }
+     );
+
+     res.status(201).json({
+       success: true,
+       message: 'Workflow forked successfully',
+       data: newWorkflow
+     });
+   } catch (error) {
+     console.error('Error forking template:', error);
+     res.status(500).json({
+       success: false,
+       error: 'Failed to fork template'
+     });
+   }
+ });
 
 module.exports = router;
