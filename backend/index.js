@@ -67,6 +67,8 @@ app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/subscriptions', require('./routes/subscriptions'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/community', require('./routes/community'));
+app.use('/api/forte-actions', require('./routes/forteActions'));
+app.use('/api/fiat-onboarding', require('./routes/fiatOnboarding'));
 
 // Health check endpoint
 app.get('/api/health', async (req, res) => {
@@ -124,6 +126,10 @@ const redisClient = redis.createClient({
   url: process.env.REDIS_URL || 'redis://localhost:6379'
 });
 redisClient.connect().catch(logger.error);
+
+// Initialize Forte Actions service
+const forteActionsService = require('./services/forteActionsService');
+forteActionsService.initialize().catch(logger.error);
 
 // WebSocket handling
 wss.on('connection', (ws) => {

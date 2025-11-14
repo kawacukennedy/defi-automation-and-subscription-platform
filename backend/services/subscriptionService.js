@@ -3,6 +3,7 @@ const User = require('../models/User');
 const { executeTransaction, createSubscriptionOnChain } = require('./flowService');
 const NotificationService = require('./notificationService');
 const NFTService = require('./nftService');
+const forteActionsService = require('./forteActionsService');
 
 class SubscriptionService {
   async createSubscription(subscriptionData) {
@@ -30,6 +31,9 @@ class SubscriptionService {
 
       // Deploy to blockchain
       await this.deploySubscriptionToBlockchain(subscription);
+
+      // Register Forte Action trigger for recurring payments
+      await this.registerSubscriptionTrigger(subscription);
 
       // Send notification
       await this.sendSubscriptionCreatedNotification(subscription);
@@ -66,6 +70,10 @@ class SubscriptionService {
         throw new Error('Subscription not found');
       }
 
+      // Unregister Forte Action trigger
+      const triggerId = `trigger_${subscriptionId}`;
+      forteActionsService.unregisterTrigger(triggerId);
+
       await this.sendSubscriptionStatusNotification(subscription, 'paused');
       return subscription;
     } catch (error) {
@@ -91,6 +99,9 @@ class SubscriptionService {
       if (!subscription) {
         throw new Error('Subscription not found');
       }
+
+      // Re-register Forte Action trigger
+      await this.registerSubscriptionTrigger(subscription);
 
       await this.sendSubscriptionStatusNotification(subscription, 'resumed');
       return subscription;
@@ -205,6 +216,62 @@ class SubscriptionService {
 
   calculateNextPayment(interval, fromDate = Date.now()) {
     return new Date(fromDate + (interval * 1000));
+  }
+
+  async registerSubscriptionTrigger(subscription) {
+    const triggerId = `trigger_${subscription.subscriptionId}`;
+
+    // Unregister existing trigger if it exists
+    forteActionsService.unregisterTrigger(triggerId);
+
+    try {
+      // Create a scheduled trigger for recurring payments
+      const triggerData = {
+        trigger: 'scheduled',
+        frequency: this.intervalToFrequency(subscription.interval),
+        schedule: this.calculateScheduleTime(subscription.interval),
+        metadata: {
+          subscriptionId: subscription.subscriptionId,
+          type: 'subscription_payment'
+        }
+      };
+
+      // Create a workflow-like object for Forte Actions
+      const workflowForTrigger = {
+        workflowId: subscription.subscriptionId,
+        trigger: triggerData.trigger,
+        schedule: triggerData.schedule,
+        frequency: triggerData.frequency,
+        metadata: triggerData.metadata,
+        status: subscription.status
+      };
+
+      await forteActionsService.registerWorkflowTrigger(workflowForTrigger);
+      console.log(`Registered Forte Action trigger for subscription ${subscription.subscriptionId}`);
+    } catch (error) {
+      console.error(`Failed to register Forte Action trigger for subscription ${subscription.subscriptionId}:`, error);
+    }
+  }
+
+  intervalToFrequency(interval) {
+    // Convert interval in seconds to frequency string
+    if (interval >= 86400) return 'daily'; // 24 hours
+    if (interval >= 3600) return 'hourly'; // 1 hour
+    return 'hourly'; // Default to hourly for shorter intervals
+  }
+
+  calculateScheduleTime(interval) {
+    // Calculate the time string for cron scheduling
+    const now = new Date();
+    const nextPayment = new Date(now.getTime() + (interval * 1000));
+
+    if (interval >= 86400) {
+      // Daily or longer - return HH:MM format
+      return `${nextPayment.getHours().toString().padStart(2, '0')}:${nextPayment.getMinutes().toString().padStart(2, '0')}`;
+    } else {
+      // Hourly or shorter - return MM format (minutes past hour)
+      return nextPayment.getMinutes().toString().padStart(2, '0');
+    }
   }
 
   async deploySubscriptionToBlockchain(subscription) {

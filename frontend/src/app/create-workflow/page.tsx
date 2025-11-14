@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useWallet } from '@/lib/WalletContext';
@@ -31,6 +31,8 @@ export default function CreateWorkflow() {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showTooltip, setShowTooltip] = useState<string | null>(null);
+  const [forteTriggerTypes, setForteTriggerTypes] = useState<any[]>([]);
+  const [loadingTriggers, setLoadingTriggers] = useState(false);
 
   const steps = [
     { id: 'action' as Step, title: 'Choose Action', icon: '🎯' },
@@ -56,6 +58,26 @@ export default function CreateWorkflow() {
       setFormData(prev => ({ ...prev, action: actionParam }));
       setCurrentStep('details');
     }
+  }, []);
+
+  // Fetch Forte Actions trigger types
+  useEffect(() => {
+    const fetchTriggerTypes = async () => {
+      setLoadingTriggers(true);
+      try {
+        const response = await fetch('/api/forte-actions/trigger-types');
+        const result = await response.json();
+        if (result.success) {
+          setForteTriggerTypes(result.data.types);
+        }
+      } catch (error) {
+        console.error('Failed to fetch trigger types:', error);
+      } finally {
+        setLoadingTriggers(false);
+      }
+    };
+
+    fetchTriggerTypes();
   }, []);
 
   const tokens = ['FLOW', 'USDC', 'FUSD', 'USDT'];
@@ -398,62 +420,224 @@ export default function CreateWorkflow() {
             </div>
           )}
 
-          {currentStep === 'triggers' && (
-            <div>
-              <h2 className="text-2xl font-semibold mb-6 bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
-                When should this run?
-              </h2>
+           {currentStep === 'triggers' && (
+             <div>
+               <h2 className="text-2xl font-semibold mb-6 bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
+                 Set Forte Actions Triggers
+               </h2>
 
-              <div className="space-y-6">
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="bg-black/30 p-6 rounded-xl"
-                >
-                  <label className="block mb-3 font-semibold">Trigger Type</label>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    {[
-                      { value: 'manual', label: 'Manual', desc: 'Run when you click execute' },
-                      { value: 'time', label: 'Scheduled', desc: 'Run at specific times' },
-                      { value: 'event', label: 'Event-based', desc: 'Run when conditions met' }
-                    ].map((trigger) => (
-                      <button
-                        key={trigger.value}
-                        onClick={() => setFormData(prev => ({ ...prev, trigger: trigger.value }))}
-                        className={`p-4 rounded-lg border transition-all ${
-                          formData.trigger === trigger.value
-                            ? 'border-green-400 bg-green-400/20'
-                            : 'border-white/20 bg-white/5 hover:border-white/40'
-                        }`}
-                      >
-                        <h4 className="font-medium">{trigger.label}</h4>
-                        <p className="text-sm text-gray-400 mt-1">{trigger.desc}</p>
-                      </button>
-                    ))}
-                  </div>
-                </motion.div>
+               <div className="space-y-6">
+                 <motion.div
+                   initial={{ opacity: 0, y: 20 }}
+                   animate={{ opacity: 1, y: 0 }}
+                   className="bg-black/30 p-6 rounded-xl"
+                 >
+                   <label className="block mb-3 font-semibold">Forte Action Trigger Type</label>
+                   {loadingTriggers ? (
+                     <div className="flex justify-center py-8">
+                       <Loading size="md" />
+                     </div>
+                   ) : (
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                       {forteTriggerTypes.map((trigger) => (
+                         <button
+                           key={trigger.id}
+                           onClick={() => setFormData(prev => ({ ...prev, trigger: trigger.id }))}
+                           className={`p-4 rounded-lg border transition-all text-left ${
+                             formData.trigger === trigger.id
+                               ? 'border-green-400 bg-green-400/20'
+                               : 'border-white/20 bg-white/5 hover:border-white/40'
+                           }`}
+                         >
+                           <h4 className="font-medium">{trigger.name}</h4>
+                           <p className="text-sm text-gray-400 mt-1">{trigger.description}</p>
+                         </button>
+                       ))}
+                     </div>
+                   )}
+                 </motion.div>
 
-                {formData.trigger === 'time' && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-black/30 p-6 rounded-xl"
-                  >
-                    <label className="block mb-3 font-semibold">Schedule</label>
-                    <input
-                      type="datetime-local"
-                      className="w-full p-3 bg-white/10 border border-white/20 rounded-lg focus:border-green-400 focus:outline-none transition-colors"
-                      value={formData.schedule}
-                      onChange={(e) => setFormData(prev => ({ ...prev, schedule: e.target.value }))}
-                    />
-                    <p className="text-sm text-gray-400 mt-2">
-                      Choose when you want this workflow to first execute
-                    </p>
-                  </motion.div>
-                )}
-              </div>
-            </div>
-          )}
+                 {/* Scheduled Trigger Configuration */}
+                 {formData.trigger === 'scheduled' && (
+                   <motion.div
+                     initial={{ opacity: 0, y: 20 }}
+                     animate={{ opacity: 1, y: 0 }}
+                     className="bg-black/30 p-6 rounded-xl"
+                   >
+                     <label className="block mb-3 font-semibold">Schedule Configuration</label>
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                       <div>
+                         <label className="block mb-2 text-sm font-medium">Frequency</label>
+                         <select
+                           className="w-full p-3 bg-white/10 border border-white/20 rounded-lg focus:border-green-400 focus:outline-none transition-colors"
+                           value={formData.frequency}
+                           onChange={(e) => setFormData(prev => ({ ...prev, frequency: e.target.value }))}
+                         >
+                           <option value="hourly">Hourly</option>
+                           <option value="daily">Daily</option>
+                           <option value="weekly">Weekly</option>
+                           <option value="monthly">Monthly</option>
+                         </select>
+                       </div>
+                       <div>
+                         <label className="block mb-2 text-sm font-medium">Time (HH:MM)</label>
+                         <input
+                           type="time"
+                           className="w-full p-3 bg-white/10 border border-white/20 rounded-lg focus:border-green-400 focus:outline-none transition-colors"
+                           value={formData.schedule}
+                           onChange={(e) => setFormData(prev => ({ ...prev, schedule: e.target.value }))}
+                         />
+                       </div>
+                     </div>
+                     <p className="text-sm text-gray-400 mt-2">
+                       Your workflow will execute automatically at the specified time and frequency
+                     </p>
+                   </motion.div>
+                 )}
+
+                 {/* Time-based Trigger Configuration */}
+                 {formData.trigger === 'time_based' && (
+                   <motion.div
+                     initial={{ opacity: 0, y: 20 }}
+                     animate={{ opacity: 1, y: 0 }}
+                     className="bg-black/30 p-6 rounded-xl"
+                   >
+                     <label className="block mb-3 font-semibold">Time Window Configuration</label>
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                       <div>
+                         <label className="block mb-2 text-sm font-medium">Start Time</label>
+                         <input
+                           type="datetime-local"
+                           className="w-full p-3 bg-white/10 border border-white/20 rounded-lg focus:border-green-400 focus:outline-none transition-colors"
+                           value={formData.metadata?.startTime || ''}
+                           onChange={(e) => setFormData(prev => ({
+                             ...prev,
+                             metadata: { ...prev.metadata, startTime: e.target.value }
+                           }))}
+                         />
+                       </div>
+                       <div>
+                         <label className="block mb-2 text-sm font-medium">End Time</label>
+                         <input
+                           type="datetime-local"
+                           className="w-full p-3 bg-white/10 border border-white/20 rounded-lg focus:border-green-400 focus:outline-none transition-colors"
+                           value={formData.metadata?.endTime || ''}
+                           onChange={(e) => setFormData(prev => ({
+                             ...prev,
+                             metadata: { ...prev.metadata, endTime: e.target.value }
+                           }))}
+                         />
+                       </div>
+                     </div>
+                     <p className="text-sm text-gray-400 mt-2">
+                       Workflow will only execute within this time window
+                     </p>
+                   </motion.div>
+                 )}
+
+                 {/* Event-based Trigger Configuration */}
+                 {formData.trigger === 'event_based' && (
+                   <motion.div
+                     initial={{ opacity: 0, y: 20 }}
+                     animate={{ opacity: 1, y: 0 }}
+                     className="bg-black/30 p-6 rounded-xl"
+                   >
+                     <label className="block mb-3 font-semibold">Event Configuration</label>
+                     <div>
+                       <label className="block mb-2 text-sm font-medium">Event Type</label>
+                       <select
+                         className="w-full p-3 bg-white/10 border border-white/20 rounded-lg focus:border-green-400 focus:outline-none transition-colors"
+                         value={formData.metadata?.eventType || ''}
+                         onChange={(e) => setFormData(prev => ({
+                           ...prev,
+                           metadata: { ...prev.metadata, eventType: e.target.value }
+                         }))}
+                       >
+                         <option value="">Select event type</option>
+                         <option value="transaction">Transaction Event</option>
+                         <option value="balance_change">Balance Change</option>
+                         <option value="price_update">Price Update</option>
+                         <option value="contract_event">Contract Event</option>
+                       </select>
+                     </div>
+                     <p className="text-sm text-gray-400 mt-2">
+                       Workflow will execute when the selected blockchain event occurs
+                     </p>
+                   </motion.div>
+                 )}
+
+                 {/* Condition-based Trigger Configuration */}
+                 {formData.trigger === 'condition_based' && (
+                   <motion.div
+                     initial={{ opacity: 0, y: 20 }}
+                     animate={{ opacity: 1, y: 0 }}
+                     className="bg-black/30 p-6 rounded-xl"
+                   >
+                     <label className="block mb-3 font-semibold">Condition Configuration</label>
+                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                       <div>
+                         <label className="block mb-2 text-sm font-medium">Condition Type</label>
+                         <select
+                           className="w-full p-3 bg-white/10 border border-white/20 rounded-lg focus:border-green-400 focus:outline-none transition-colors"
+                           value={formData.metadata?.condition?.type || ''}
+                           onChange={(e) => setFormData(prev => ({
+                             ...prev,
+                             metadata: {
+                               ...prev.metadata,
+                               condition: { ...prev.metadata?.condition, type: e.target.value }
+                             }
+                           }))}
+                         >
+                           <option value="">Select type</option>
+                           <option value="balance_threshold">Balance Threshold</option>
+                           <option value="price_threshold">Price Threshold</option>
+                           <option value="time_window">Time Window</option>
+                         </select>
+                       </div>
+                       <div>
+                         <label className="block mb-2 text-sm font-medium">Operator</label>
+                         <select
+                           className="w-full p-3 bg-white/10 border border-white/20 rounded-lg focus:border-green-400 focus:outline-none transition-colors"
+                           value={formData.metadata?.condition?.operator || ''}
+                           onChange={(e) => setFormData(prev => ({
+                             ...prev,
+                             metadata: {
+                               ...prev.metadata,
+                               condition: { ...prev.metadata?.condition, operator: e.target.value }
+                             }
+                           }))}
+                         >
+                           <option value="">Select operator</option>
+                           <option value="above">Above</option>
+                           <option value="below">Below</option>
+                           <option value="equals">Equals</option>
+                         </select>
+                       </div>
+                       <div>
+                         <label className="block mb-2 text-sm font-medium">Threshold Value</label>
+                         <input
+                           type="number"
+                           step="0.01"
+                           className="w-full p-3 bg-white/10 border border-white/20 rounded-lg focus:border-green-400 focus:outline-none transition-colors"
+                           value={formData.metadata?.condition?.threshold || ''}
+                           onChange={(e) => setFormData(prev => ({
+                             ...prev,
+                             metadata: {
+                               ...prev.metadata,
+                               condition: { ...prev.metadata?.condition, threshold: e.target.value }
+                             }
+                           }))}
+                         />
+                       </div>
+                     </div>
+                     <p className="text-sm text-gray-400 mt-2">
+                       Workflow will execute when the condition is met
+                     </p>
+                   </motion.div>
+                 )}
+               </div>
+             </div>
+           )}
 
           {currentStep === 'review' && (
             <div>
@@ -505,18 +689,47 @@ export default function CreateWorkflow() {
                          <span className="text-gray-400">Frequency:</span>
                          <span className="ml-2 font-medium capitalize">{formData.frequency}</span>
                        </div>
-                       <div>
-                         <span className="text-gray-400">Trigger:</span>
-                         <span className="ml-2 font-medium capitalize">{formData.trigger}</span>
-                       </div>
+                        <div>
+                          <span className="text-gray-400">Forte Trigger:</span>
+                          <span className="ml-2 font-medium">
+                            {forteTriggerTypes.find(t => t.id === formData.trigger)?.name || formData.trigger}
+                          </span>
+                        </div>
                      </>
                    )}
-                  {formData.schedule && (
-                    <div className="md:col-span-2">
-                      <span className="text-gray-400">Next Run:</span>
-                      <span className="ml-2 font-medium">{new Date(formData.schedule).toLocaleString()}</span>
-                    </div>
-                  )}
+                   {/* Trigger-specific details */}
+                   {formData.trigger === 'scheduled' && formData.schedule && (
+                     <div className="md:col-span-2">
+                       <span className="text-gray-400">Schedule:</span>
+                       <span className="ml-2 font-medium">
+                         {formData.frequency} at {formData.schedule}
+                       </span>
+                     </div>
+                   )}
+                   {formData.trigger === 'time_based' && formData.metadata?.startTime && (
+                     <div className="md:col-span-2">
+                       <span className="text-gray-400">Time Window:</span>
+                       <span className="ml-2 font-medium">
+                         {new Date(formData.metadata.startTime).toLocaleString()} - {new Date(formData.metadata.endTime).toLocaleString()}
+                       </span>
+                     </div>
+                   )}
+                   {formData.trigger === 'event_based' && formData.metadata?.eventType && (
+                     <div className="md:col-span-2">
+                       <span className="text-gray-400">Event Type:</span>
+                       <span className="ml-2 font-medium capitalize">
+                         {formData.metadata.eventType.replace('_', ' ')}
+                       </span>
+                     </div>
+                   )}
+                   {formData.trigger === 'condition_based' && formData.metadata?.condition && (
+                     <div className="md:col-span-2">
+                       <span className="text-gray-400">Condition:</span>
+                       <span className="ml-2 font-medium">
+                         {formData.metadata.condition.type?.replace('_', ' ')} {formData.metadata.condition.operator} {formData.metadata.condition.threshold}
+                       </span>
+                     </div>
+                   )}
                 </div>
               </motion.div>
 

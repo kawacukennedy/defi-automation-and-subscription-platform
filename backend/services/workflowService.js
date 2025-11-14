@@ -3,6 +3,7 @@ const User = require('../models/User');
 const Notification = require('../models/Notification');
 const { executeTransaction, executeScript, createWorkflowOnChain, executeWorkflowOnChain } = require('./flowService');
 const NFTService = require('./nftService');
+const forteActionsService = require('./forteActionsService');
 
 class WorkflowService {
   async createWorkflow(workflowData) {
@@ -30,6 +31,9 @@ class WorkflowService {
 
       // Deploy to blockchain
       await this.deployWorkflowToBlockchain(workflow);
+
+      // Register trigger with Forte Actions
+      await forteActionsService.registerWorkflowTrigger(workflow);
 
       // Send notification
       await this.sendWorkflowCreatedNotification(workflow);
@@ -119,6 +123,10 @@ class WorkflowService {
         throw new Error('Workflow not found');
       }
 
+      // Unregister trigger with Forte Actions
+      const triggerId = `trigger_${workflowId}`;
+      forteActionsService.unregisterTrigger(triggerId);
+
       await this.sendWorkflowStatusNotification(workflow, 'paused');
       return workflow;
     } catch (error) {
@@ -144,6 +152,9 @@ class WorkflowService {
       if (!workflow) {
         throw new Error('Workflow not found');
       }
+
+      // Re-register trigger with Forte Actions
+      await forteActionsService.registerWorkflowTrigger(workflow);
 
       await this.sendWorkflowStatusNotification(workflow, 'resumed');
       return workflow;

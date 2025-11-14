@@ -75,7 +75,7 @@ router.get('/templates/:id', async (req, res) => {
 });
 
 // Fork template
-router.post('/templates/:id/fork', auth, async (req, res) => {
+router.post('/templates/:id/fork', auth.authenticateUser, async (req, res) => {
   try {
     const template = await Workflow.findOne({
       _id: req.params.id,
@@ -126,7 +126,7 @@ router.post('/templates/:id/fork', auth, async (req, res) => {
 });
 
 // Vote on template
-router.post('/templates/:id/vote', auth, async (req, res) => {
+router.post('/templates/:id/vote', auth.authenticateUser, async (req, res) => {
   try {
     const template = await Workflow.findOne({
       _id: req.params.id,
@@ -159,7 +159,7 @@ router.post('/templates/:id/vote', auth, async (req, res) => {
 });
 
 // Share template
-router.post('/templates/:id/share', auth, (req, res) => {
+router.post('/templates/:id/share', auth.authenticateUser, (req, res) => {
   const template = templates.find(t => t.id == req.params.id);
   if (!template) return res.status(404).json({ error: 'Template not found' });
 
@@ -189,7 +189,7 @@ router.get('/leaderboard', async (req, res) => {
 });
 
 // Add comment to template
-router.post('/templates/:id/comments', auth, (req, res) => {
+router.post('/templates/:id/comments', auth.authenticateUser, (req, res) => {
   const { comment } = req.body;
   // Mock comment storage
   res.json({ message: 'Comment added successfully' });
@@ -205,7 +205,7 @@ router.get('/templates/:id/comments', (req, res) => {
 });
 
 // Rate template
-router.post('/templates/:id/rate', auth, async (req, res) => {
+router.post('/templates/:id/rate', auth.authenticateUser, async (req, res) => {
   try {
     const { rating } = req.body;
     // In a real implementation, you'd store ratings in a separate collection
@@ -223,7 +223,7 @@ router.post('/templates/:id/rate', auth, async (req, res) => {
 });
 
 // NFT Achievement routes
-router.get('/nfts/user/:address', auth, async (req, res) => {
+router.get('/nfts/user/:address', auth.authenticateUser, async (req, res) => {
   try {
     const nfts = await NFTService.getUserNFTs(req.params.address);
     res.json({
@@ -239,7 +239,7 @@ router.get('/nfts/user/:address', auth, async (req, res) => {
   }
 });
 
-router.post('/achievements/check', auth, async (req, res) => {
+router.post('/achievements/check', auth.authenticateUser, async (req, res) => {
   try {
     const achievements = await NFTService.checkAndAwardAchievements(req.user.address);
     res.json({

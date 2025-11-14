@@ -7,7 +7,8 @@ const AdminService = require('../services/adminService');
 const auth = require('../middleware/auth');
 
 // All admin routes require authentication
-router.use(auth);
+router.use(auth.authenticateUser);
+router.use(auth.requireAdmin);
 
 // Get all workflows
 router.get('/workflows', async (req, res) => {

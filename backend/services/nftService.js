@@ -18,7 +18,7 @@ class NFTService {
         throw new Error('User already has this achievement');
       }
 
-      // Mint NFT on chain (placeholder - would call FlowFiNFTRewards contract)
+      // Mint NFT on chain using FlowFiNFTRewards contract
       const badgeTypeMap = {
         'workflow_master': 'WorkflowMaster',
         'staking_pro': 'StakingPro',
@@ -34,25 +34,51 @@ class NFTService {
 
       const badgeType = badgeTypeMap[achievementType] || 'EarlyAdopter';
 
-      // Mock NFT minting - in real implementation, this would call the Cadence contract
-      const nftId = Math.floor(Math.random() * 1000000);
+      // Prepare metadata for IPFS/Cadence storage
+      const nftMetadata = {
+        name: this.getBadgeName(badgeType),
+        description: this.getBadgeDescription(badgeType),
+        image: this.getBadgeImage(badgeType),
+        attributes: [
+          {
+            trait_type: 'Achievement Type',
+            value: badgeType
+          },
+          {
+            trait_type: 'Rarity',
+            value: this.getBadgeRarity(badgeType)
+          },
+          {
+            trait_type: 'Earned Date',
+            value: new Date().toISOString().split('T')[0]
+          },
+          ...this.getAdditionalAttributes(achievementType, metadata)
+        ],
+        ...metadata
+      };
+
+      // Call Cadence contract to mint NFT
+      const result = await this.mintNFTOnChain(userAddress, badgeType, nftMetadata);
+
+      if (!result.success) {
+        throw new Error('Failed to mint NFT on blockchain');
+      }
+
       const nftData = {
-        id: nftId,
+        id: result.nftId,
         badgeType,
-        metadata: {
-          name: this.getBadgeName(badgeType),
-          description: this.getBadgeDescription(badgeType),
-          ...metadata
-        },
-        mintedAt: new Date()
+        metadata: nftMetadata,
+        mintedAt: new Date(),
+        transactionId: result.transactionId
       };
 
       // Update user achievements
       user.achievements.push({
-        badgeId: `nft_${nftId}`,
+        badgeId: `nft_${result.nftId}`,
         badgeType: achievementType,
         earnedAt: new Date(),
-        metadata: nftData
+        metadata: nftData,
+        transactionId: result.transactionId
       });
 
       await user.save();
@@ -63,7 +89,7 @@ class NFTService {
         type: 'achievement_earned',
         title: 'New Achievement Unlocked!',
         message: `Congratulations! You've earned the "${this.getBadgeName(badgeType)}" badge.`,
-        data: { badgeId: nftId, badgeType },
+        data: { badgeId: result.nftId, badgeType, transactionId: result.transactionId },
         channels: ['in_app', 'email'],
         priority: 'medium'
       });
@@ -157,6 +183,212 @@ class NFTService {
       BetaTester: 'Helped test FlowFi during development'
     };
     return descriptions[badgeType] || 'Achievement unlocked';
+  }
+
+  getBadgeImage(badgeType) {
+    // Return IPFS URLs for badge images
+    const images = {
+      WorkflowMaster: 'ipfs://QmWorkflowMasterBadge',
+      StakingPro: 'ipfs://QmStakingProBadge',
+      PaymentWarrior: 'ipfs://QmPaymentWarriorBadge',
+      CommunityContributor: 'ipfs://QmCommunityContributorBadge',
+      EarlyAdopter: 'ipfs://QmEarlyAdopterBadge',
+      MonthlyStreak: 'ipfs://QmMonthlyStreakBadge',
+      DAOChampion: 'ipfs://QmDAOChampionBadge',
+      TemplateForker: 'ipfs://QmTemplateForkerBadge',
+      HighValueWorkflow: 'ipfs://QmHighValueWorkflowBadge',
+      BetaTester: 'ipfs://QmBetaTesterBadge'
+    };
+    return images[badgeType] || 'ipfs://QmDefaultBadge';
+  }
+
+  getBadgeRarity(badgeType) {
+    const rarities = {
+      WorkflowMaster: 'Legendary',
+      StakingPro: 'Epic',
+      PaymentWarrior: 'Epic',
+      CommunityContributor: 'Rare',
+      EarlyAdopter: 'Common',
+      MonthlyStreak: 'Uncommon',
+      DAOChampion: 'Legendary',
+      TemplateForker: 'Rare',
+      HighValueWorkflow: 'Epic',
+      BetaTester: 'Common'
+    };
+    return rarities[badgeType] || 'Common';
+  }
+
+  getAdditionalAttributes(achievementType, metadata) {
+    const attributes = [];
+
+    // Add achievement-specific attributes
+    switch (achievementType) {
+      case 'workflow_master':
+        attributes.push({
+          trait_type: 'Workflows Created',
+          value: metadata.totalWorkflows || 100
+        });
+        break;
+      case 'payment_warrior':
+        attributes.push({
+          trait_type: 'Payments Processed',
+          value: metadata.totalPayments || 1000
+        });
+        break;
+      case 'high_value_workflow':
+        attributes.push({
+          trait_type: 'Volume Processed',
+          value: `$${metadata.totalVolume || 10000}`
+        });
+        break;
+      case 'monthly_streak':
+        attributes.push({
+          trait_type: 'Streak Duration',
+          value: `${metadata.streakDays || 30} days`
+        });
+        break;
+    }
+
+    return attributes;
+  }
+
+  // Get NFT collection statistics
+  async getNFTStats() {
+    try {
+      const users = await User.find({ 'achievements.0': { $exists: true } });
+      const totalNFTs = users.reduce((sum, user) => sum + user.achievements.length, 0);
+
+      const badgeCounts = {};
+      users.forEach(user => {
+        user.achievements.forEach(achievement => {
+          badgeCounts[achievement.badgeType] = (badgeCounts[achievement.badgeType] || 0) + 1;
+        });
+      });
+
+      return {
+        totalNFTs,
+        totalUsers: users.length,
+        badgeDistribution: badgeCounts,
+        mostPopularBadge: Object.entries(badgeCounts).sort(([,a], [,b]) => b - a)[0]?.[0] || null
+      };
+    } catch (error) {
+      console.error('Error fetching NFT stats:', error);
+      throw error;
+    }
+  }
+
+  // Mint NFT on Flow blockchain
+  async mintNFTOnChain(userAddress, badgeType, metadata) {
+    try {
+      const cadence = `
+        import FlowFiNFTRewards from 0xFlowFiNFTRewards
+        import NonFungibleToken from 0xNonFungibleToken
+        import MetadataViews from 0xMetadataViews
+
+        transaction(badgeType: String, metadata: {String: String}) {
+          prepare(signer: AuthAccount) {
+            // Ensure the signer has a collection
+            if signer.borrow<&FlowFiNFTRewards.Collection>(from: FlowFiNFTRewards.CollectionStoragePath) == nil {
+              signer.save(<- FlowFiNFTRewards.createEmptyCollection(), to: FlowFiNFTRewards.CollectionStoragePath)
+              signer.link<&FlowFiNFTRewards.Collection{NonFungibleToken.CollectionPublic, FlowFiNFTRewards.FlowFiNFTCollectionPublic, MetadataViews.ResolverCollection}>(
+                FlowFiNFTRewards.CollectionStoragePath,
+                target: FlowFiNFTRewards.CollectionPublicPath
+              )
+            }
+
+            // Mint the NFT
+            let collectionRef = signer.borrow<&FlowFiNFTRewards.Collection>(from: FlowFiNFTRewards.CollectionStoragePath)
+              ?? panic("Could not borrow a reference to the owner's collection")
+
+            let nftId = collectionRef.mintNFT(badgeType: badgeType, metadata: metadata)
+          }
+        }
+      `;
+
+      const args = [
+        { value: badgeType, type: 'String' },
+        { value: metadata, type: 'Dictionary' }
+      ];
+
+      const result = await executeTransaction(cadence, args);
+
+      // Extract NFT ID from transaction events (mock for now)
+      const nftId = Math.floor(Math.random() * 1000000);
+
+      return {
+        success: result.status === 4, // SEALED
+        nftId,
+        transactionId: result.transactionId
+      };
+    } catch (error) {
+      console.error('Error minting NFT on chain:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Get NFT metadata from chain
+  async getNFTMetadata(nftId) {
+    try {
+      const cadence = `
+        import FlowFiNFTRewards from 0xFlowFiNFTRewards
+        import MetadataViews from 0xMetadataViews
+
+        pub fun main(nftId: UInt64): FlowFiNFTRewards.NFTMetadata {
+          let collection = getAccount(0xFlowFiNFTRewards).getCapability(FlowFiNFTRewards.CollectionPublicPath)
+            .borrow<&FlowFiNFTRewards.Collection{MetadataViews.ResolverCollection}>()
+            ?? panic("Could not borrow a reference to the collection")
+
+          let nft = collection.borrowViewResolver(id: nftId)
+          let metadata = FlowFiNFTRewards.getNFTMetadata(id: nftId)
+
+          return metadata
+        }
+      `;
+
+      const result = await executeScript(cadence, [{ value: nftId, type: 'UInt64' }]);
+      return result.data;
+    } catch (error) {
+      console.error('Error fetching NFT metadata:', error);
+      throw error;
+    }
+  }
+
+  // Transfer NFT
+  async transferNFT(fromAddress, toAddress, nftId) {
+    try {
+      const cadence = `
+        import FlowFiNFTRewards from 0xFlowFiNFTRewards
+        import NonFungibleToken from 0xNonFungibleToken
+
+        transaction(recipient: Address, nftId: UInt64) {
+          prepare(signer: AuthAccount) {
+            let collectionRef = signer.borrow<&FlowFiNFTRewards.Collection>(from: FlowFiNFTRewards.CollectionStoragePath)
+              ?? panic("Could not borrow a reference to the owner's collection")
+
+            let recipientRef = getAccount(recipient).getCapability(FlowFiNFTRewards.CollectionPublicPath)
+              .borrow<&{NonFungibleToken.CollectionPublic}>()
+              ?? panic("Could not borrow recipient's collection reference")
+
+            let nft <- collectionRef.withdraw(withdrawID: nftId)
+            recipientRef.deposit(token: <- nft)
+          }
+        }
+      `;
+
+      const args = [
+        { value: toAddress, type: 'Address' },
+        { value: nftId, type: 'UInt64' }
+      ];
+
+      const result = await executeTransaction(cadence, args);
+      return {
+        success: result.status === 4,
+        transactionId: result.transactionId
+      };
+    } catch (error) {
+      console.error('Error transferring NFT:', error);
+      throw error;
+    }
   }
 
   // Get leaderboard with NFT achievements
