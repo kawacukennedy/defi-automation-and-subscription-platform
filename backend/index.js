@@ -69,6 +69,7 @@ app.use('/api/admin', require('./routes/admin'));
 app.use('/api/community', require('./routes/community'));
 app.use('/api/forte-actions', require('./routes/forteActions'));
 app.use('/api/fiat-onboarding', require('./routes/fiatOnboarding'));
+app.use('/api/dao', require('./routes/dao'));
 
 // Health check endpoint
 app.get('/api/health', async (req, res) => {

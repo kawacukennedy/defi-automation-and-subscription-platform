@@ -10,13 +10,18 @@ const auth = require('../middleware/auth');
 router.use(auth.authenticateUser);
 router.use(auth.requireAdmin);
 
-// Get all workflows
+// Get all workflows with pagination
 router.get('/workflows', async (req, res) => {
   try {
-    const workflows = await AdminService.getAllWorkflows();
-    res.json(workflows);
+    const { limit = 50, status, userAddress } = req.query;
+    const workflows = await AdminService.getAllWorkflows({
+      limit: parseInt(limit),
+      status,
+      userAddress
+    });
+    res.json({ success: true, data: workflows });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
@@ -24,10 +29,10 @@ router.get('/workflows', async (req, res) => {
 router.get('/workflows/:id', async (req, res) => {
   try {
     const workflow = await AdminService.getWorkflowById(req.params.id);
-    if (!workflow) return res.status(404).json({ error: 'Workflow not found' });
-    res.json(workflow);
+    if (!workflow) return res.status(404).json({ success: false, error: 'Workflow not found' });
+    res.json({ success: true, data: workflow });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
@@ -35,9 +40,9 @@ router.get('/workflows/:id', async (req, res) => {
 router.post('/workflows/:id/retry', async (req, res) => {
   try {
     const workflow = await AdminService.retryWorkflow(req.params.id);
-    res.json(workflow);
+    res.json({ success: true, data: workflow });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
@@ -45,19 +50,39 @@ router.post('/workflows/:id/retry', async (req, res) => {
 router.post('/workflows/:id/cancel', async (req, res) => {
   try {
     const workflow = await AdminService.cancelWorkflow(req.params.id);
-    res.json(workflow);
+    res.json({ success: true, data: workflow });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
-// Get error stats
+// Pause workflow
+router.post('/workflows/:id/pause', async (req, res) => {
+  try {
+    const workflow = await AdminService.pauseWorkflow(req.params.id);
+    res.json({ success: true, data: workflow });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Resume workflow
+router.post('/workflows/:id/resume', async (req, res) => {
+  try {
+    const workflow = await AdminService.resumeWorkflow(req.params.id);
+    res.json({ success: true, data: workflow });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Get error logs
 router.get('/errors', async (req, res) => {
   try {
-    const errorStats = await AdminService.getErrorStats();
-    res.json(errorStats);
+    const errors = await AdminService.getErrorLogs();
+    res.json({ success: true, data: errors });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
@@ -65,9 +90,9 @@ router.get('/errors', async (req, res) => {
 router.post('/disputes/:userId/resolve', async (req, res) => {
   try {
     const result = await AdminService.resolveDispute(req.params.userId, req.body.details);
-    res.json(result);
+    res.json({ success: true, data: result });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
@@ -75,9 +100,9 @@ router.post('/disputes/:userId/resolve', async (req, res) => {
 router.get('/analytics', async (req, res) => {
   try {
     const overview = await AdminService.getAnalyticsOverview();
-    res.json(overview);
+    res.json({ success: true, data: overview });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 

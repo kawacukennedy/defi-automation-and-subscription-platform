@@ -7,9 +7,16 @@ const NotificationService = require('./notificationService');
 const MonitoringService = require('./monitoringService');
 
 class AdminService {
-  // Get all workflows for monitoring
-  async getAllWorkflows() {
-    return await Workflow.find().populate('userId', 'username');
+  // Get all workflows for monitoring with filters
+  async getAllWorkflows({ limit = 50, status, userAddress } = {}) {
+    const query = {};
+    if (status) query.status = status;
+    if (userAddress) query.userAddress = userAddress;
+
+    return await Workflow.find(query)
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .select('workflowId userAddress action status executionCount successCount failureCount lastExecution createdAt');
   }
 
   // Get workflow by ID
@@ -19,54 +26,67 @@ class AdminService {
 
   // Retry failed workflow
   async retryWorkflow(workflowId) {
-    const workflow = await Workflow.findById(workflowId);
+    const workflow = await Workflow.findOne({ workflowId });
     if (!workflow) throw new Error('Workflow not found');
 
-    workflow.status = 'pending';
+    workflow.status = 'active';
     workflow.retryCount = (workflow.retryCount || 0) + 1;
     await workflow.save();
 
-    // Notify user
-    await NotificationService.sendNotification(
-      workflow.userId,
-      'Workflow Retry',
-      `Workflow ${workflowId} is being retried.`
-    );
+    // Trigger workflow execution
+    const workflowService = require('./workflowService');
+    await workflowService.executeWorkflow(workflowId);
 
     return workflow;
   }
 
   // Cancel workflow
   async cancelWorkflow(workflowId) {
-    const workflow = await Workflow.findById(workflowId);
+    const workflow = await Workflow.findOne({ workflowId });
     if (!workflow) throw new Error('Workflow not found');
 
     workflow.status = 'cancelled';
     await workflow.save();
 
-    MonitoringService.stopWorkflowMonitoring(workflowId);
+    return workflow;
+  }
 
-    // Notify user
-    await NotificationService.sendNotification(
-      workflow.userId,
-      'Workflow Cancelled',
-      `Workflow ${workflowId} has been cancelled.`
-    );
+  // Pause workflow
+  async pauseWorkflow(workflowId) {
+    const workflow = await Workflow.findOne({ workflowId });
+    if (!workflow) throw new Error('Workflow not found');
+
+    workflow.status = 'paused';
+    await workflow.save();
 
     return workflow;
   }
 
-  // Get error statistics
-  async getErrorStats() {
-    const failedWorkflows = await Workflow.find({ status: 'failed' });
-    const errorCounts = {};
+  // Resume workflow
+  async resumeWorkflow(workflowId) {
+    const workflow = await Workflow.findOne({ workflowId });
+    if (!workflow) throw new Error('Workflow not found');
 
-    failedWorkflows.forEach(wf => {
-      const error = wf.lastError || 'Unknown error';
-      errorCounts[error] = (errorCounts[error] || 0) + 1;
-    });
+    workflow.status = 'active';
+    await workflow.save();
 
-    return errorCounts;
+    return workflow;
+  }
+
+  // Get error logs
+  async getErrorLogs() {
+    const failedWorkflows = await Workflow.find({ status: 'failed' })
+      .sort({ updatedAt: -1 })
+      .limit(50)
+      .select('workflowId userAddress action lastError updatedAt');
+
+    return failedWorkflows.map(wf => ({
+      id: wf.workflowId,
+      message: wf.lastError || 'Unknown error',
+      count: 1, // Simplified - would aggregate in real implementation
+      lastOccurrence: wf.updatedAt,
+      severity: wf.lastError?.includes('balance') ? 'high' : 'medium'
+    }));
   }
 
   // Resolve user dispute
@@ -89,15 +109,26 @@ class AdminService {
     const totalWorkflows = await Workflow.countDocuments();
     const activeWorkflows = await Workflow.countDocuments({ status: 'active' });
     const totalUsers = await User.countDocuments();
+    const totalExecutions = await Workflow.aggregate([
+      { $group: { _id: null, total: { $sum: '$executionCount' } } }
+    ]);
 
-    const successRate = totalWorkflows > 0 ?
-      (await Workflow.countDocuments({ status: 'completed' })) / totalWorkflows : 0;
+    const successfulExecutions = await Workflow.aggregate([
+      { $group: { _id: null, total: { $sum: '$successCount' } } }
+    ]);
+
+    const successRate = totalExecutions[0]?.total > 0 ?
+      (successfulExecutions[0]?.total || 0) / totalExecutions[0].total * 100 : 0;
+
+    const errorRate = 100 - successRate;
 
     return {
       totalWorkflows,
       activeWorkflows,
       totalUsers,
-      successRate: Math.round(successRate * 100) / 100
+      totalExecutions: totalExecutions[0]?.total || 0,
+      successRate: Math.round(successRate * 100) / 100,
+      errorRate: Math.round(errorRate * 100) / 100
     };
   }
 

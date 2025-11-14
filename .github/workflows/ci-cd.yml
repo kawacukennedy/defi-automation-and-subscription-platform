@@ -2,22 +2,47 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, develop ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, develop ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+env:
+  NODE_VERSION: '20'
 
 jobs:
-  test:
+  lint-and-test:
+    name: Lint & Test
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
         node-version: [18.x, 20.x]
 
-    steps:
-    - uses: actions/checkout@v4
+    services:
+      mongodb:
+        image: mongo:7
+        ports:
+          - 27017:27017
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
 
-    - name: Use Node.js ${{ matrix.node-version }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
@@ -41,68 +66,94 @@ jobs:
     - name: Run backend linting
       run: |
         cd backend
-        npm run lint || echo "No lint script for backend"
+        npm run lint
+
+    - name: Run frontend type checking
+      run: |
+        cd frontend
+        npm run build --dry-run || npx tsc --noEmit
 
     - name: Run frontend tests
       run: |
         cd frontend
-        npm test || echo "No tests configured"
+        npm test -- --coverage --watchAll=false
+      env:
+        CI: true
 
     - name: Run backend tests
       run: |
         cd backend
         npm test
+      env:
+        MONGODB_URI: mongodb://localhost:27017/flowfi_test
+        REDIS_URL: redis://localhost:6379
+        NODE_ENV: test
+
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v3
+      with:
+        directory: ./coverage
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
 
   build-and-deploy:
-    needs: test
+    needs: lint-and-test
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+
+    environment:
+      name: ${{ github.event.inputs.environment || 'production' }}
+      url: ${{ steps.deploy.outputs.url }}
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        cache: 'npm'
+     - name: Setup Node.js
+       uses: actions/setup-node@v4
+       with:
+         node-version: ${{ env.NODE_VERSION }}
+         cache: 'npm'
 
-    - name: Install frontend dependencies
-      run: |
-        cd frontend
-        npm ci
+     - name: Cache frontend dependencies
+       uses: actions/cache@v3
+       with:
+         path: frontend/node_modules
+         key: ${{ runner.os }}-frontend-${{ hashFiles('frontend/package-lock.json') }}
+         restore-keys: |
+           ${{ runner.os }}-frontend-
+
+     - name: Cache backend dependencies
+       uses: actions/cache@v3
+       with:
+         path: backend/node_modules
+         key: ${{ runner.os }}-backend-${{ hashFiles('backend/package-lock.json') }}
+         restore-keys: |
+           ${{ runner.os }}-backend-
+
+     - name: Install frontend dependencies
+       run: |
+         cd frontend
+         npm ci
+
+     - name: Install backend dependencies
+       run: |
+         cd backend
+         npm ci
 
     - name: Build frontend
       run: |
         cd frontend
         npm run build
+      env:
+        NEXT_PUBLIC_FLOW_NETWORK: ${{ env.FLOW_NETWORK }}
+        NEXT_PUBLIC_API_URL: ${{ secrets.API_URL }}
 
-    - name: Install backend dependencies
-      run: |
-        cd backend
-        npm ci
-
-    - name: Deploy to Vercel (Frontend)
-      if: success()
+    - name: Run frontend build tests
       run: |
         cd frontend
-        npx vercel --prod --yes
-      env:
-        VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-
-    - name: Deploy to Railway (Backend)
-      if: success()
-      run: |
-        cd backend
-        railway deploy
-      env:
-        RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-
-  contract-tests:
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v4
+        npm run build
 
     - name: Setup Flow CLI
       run: |
@@ -110,12 +161,125 @@ jobs:
         tar -xzf flow-cli.tar.gz
         sudo mv flow /usr/local/bin/
 
-    - name: Test Cadence contracts
+     - name: Deploy contracts
+       run: |
+         cd cadence
+         if [ "${{ github.event.inputs.environment }}" = "production" ]; then
+           flow project deploy --network mainnet
+         else
+           flow project deploy --network testnet
+         fi
+
+     - name: Deploy to Vercel (Frontend)
+       id: deploy-frontend
+       run: |
+         cd frontend
+         # Install Vercel CLI if not available
+         npm i -g vercel
+         # Deploy with environment-specific settings
+         if [ "${{ github.event.inputs.environment }}" = "production" ]; then
+           DEPLOY_URL=$(vercel --prod --yes)
+         else
+           DEPLOY_URL=$(vercel --yes)
+         fi
+         echo "url=$DEPLOY_URL" >> $GITHUB_OUTPUT
+       env:
+         VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+         VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+         VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+     - name: Deploy to Railway (Backend)
+       id: deploy-backend
+       run: |
+         cd backend
+         # Install Railway CLI if not available
+         npm install -g @railway/cli
+         # Deploy with environment variables
+         railway login --token ${{ secrets.RAILWAY_TOKEN }}
+         railway link ${{ secrets.RAILWAY_PROJECT_ID }}
+         # Run database migrations if needed
+         if [ -f "package.json" ] && grep -q "migrate" "package.json"; then
+           npm run migrate
+         fi
+         railway up
+         # Get deployment URL (Railway provides static URLs)
+         echo "url=${{ secrets.API_URL }}" >> $GITHUB_OUTPUT
+       env:
+         RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+         RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
+         MONGODB_URI: ${{ secrets.MONGODB_URI }}
+         REDIS_URL: ${{ secrets.REDIS_URL }}
+
+     - name: Health check
+       run: |
+         # Wait for deployments to be ready
+         sleep 60
+         # Check frontend health
+         curl -f ${{ steps.deploy-frontend.outputs.url }} || exit 1
+         # Check backend health
+         curl -f ${{ steps.deploy-backend.outputs.url }}/api/health || exit 1
+
+     - name: Run smoke tests
+       run: |
+         # Basic integration tests
+         curl -f ${{ steps.deploy-backend.outputs.url }}/api/health || exit 1
+         # Test key endpoints
+         curl -f ${{ steps.deploy-backend.outputs.url }}/api/analytics/summary || exit 1
+
+    - name: Notify deployment success
+      if: success()
       run: |
-        cd contracts
-        # Add contract testing commands here
-        echo "Running contract tests..."
-        # flow test
+        curl -X POST ${{ secrets.DISCORD_WEBHOOK_URL }} \
+          -H 'Content-Type: application/json' \
+          -d '{
+            "embeds": [{
+              "title": "🚀 Deployment Successful",
+              "description": "FlowFi has been deployed to ${{ github.event.inputs.environment || '\''production'\'' }}",
+              "color": 3066993,
+              "fields": [
+                {"name": "Commit", "value": "${{ github.sha }}", "inline": true},
+                {"name": "Environment", "value": "${{ github.event.inputs.environment || '\''production'\'' }}", "inline": true},
+                {"name": "Triggered by", "value": "${{ github.actor }}", "inline": true}
+              ]
+            }]
+          }'
+
+    - name: Notify deployment failure
+      if: failure()
+      run: |
+        curl -X POST ${{ secrets.DISCORD_WEBHOOK_URL }} \
+          -H 'Content-Type: application/json' \
+          -d '{
+            "embeds": [{
+              "title": "❌ Deployment Failed",
+              "description": "FlowFi deployment to ${{ github.event.inputs.environment || '\''production'\'' }} failed",
+              "color": 15158332,
+              "fields": [
+                {"name": "Commit", "value": "${{ github.sha }}", "inline": true},
+                {"name": "Environment", "value": "${{ github.event.inputs.environment || '\''production'\'' }}", "inline": true},
+                {"name": "Triggered by", "value": "${{ github.actor }}", "inline": true}
+              ]
+            }]
+          }'
+
+   contract-tests:
+     runs-on: ubuntu-latest
+     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+
+     steps:
+     - uses: actions/checkout@v4
+
+     - name: Setup Flow CLI
+       run: |
+         wget -O flow-cli.tar.gz https://github.com/onflow/flow-cli/releases/download/v1.4.2/flow-cli_1.4.2_linux_amd64.tar.gz
+         tar -xzf flow-cli.tar.gz
+         sudo mv flow /usr/local/bin/
+
+     - name: Test Cadence contracts
+       run: |
+         cd cadence
+         # Run contract tests
+         flow test --network emulator
 
   security-scan:
     runs-on: ubuntu-latest

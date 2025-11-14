@@ -3,9 +3,9 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useWallet } from '@/lib/WalletContext';
-import { useTheme } from '@/lib/ThemeContext';
 import { useToast } from '@/lib/ToastContext';
 import Loading from '@/components/Loading';
+import FiatOnboarding from '@/components/FiatOnboarding';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,8 +25,7 @@ interface PrivacySettings {
 }
 
 export default function Settings() {
-  const { user } = useWallet();
-  const { theme, setTheme } = useTheme();
+  const { user, connected, walletType, switchWallet, disconnectWallet } = useWallet();
   const { success, error } = useToast();
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('profile');
@@ -101,6 +100,8 @@ export default function Settings() {
 
   const tabs = [
     { id: 'profile', label: 'Profile', icon: '👤' },
+    { id: 'wallets', label: 'Wallets', icon: '🔑' },
+    { id: 'fiat', label: 'Fiat Onboarding', icon: '💰' },
     { id: 'notifications', label: 'Notifications', icon: '🔔' },
     { id: 'privacy', label: 'Privacy', icon: '🔒' },
     { id: 'security', label: 'Security', icon: '🛡️' },
@@ -109,6 +110,92 @@ export default function Settings() {
 
   const renderTabContent = () => {
     switch (activeTab) {
+      case 'wallets':
+        return (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="space-y-6"
+          >
+            <div className="bg-black/20 backdrop-blur-md border border-white/10 p-6 rounded-xl">
+              <h3 className="text-xl font-semibold mb-4 bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
+                Wallet Management
+              </h3>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-4 bg-black/30 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full flex items-center justify-center">
+                      {walletType === 'dapper' ? '🦆' : walletType === 'blocto' ? '🔵' : walletType === 'lilico' ? '🟣' : '🔗'}
+                    </div>
+                    <div>
+                      <p className="font-medium capitalize">{walletType || 'Flow'} Wallet</p>
+                      <p className="text-sm text-gray-400">
+                        {connected && user?.addr ? `${user.addr.slice(0, 6)}...${user.addr.slice(-4)}` : 'Not connected'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    {connected && <span className="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-sm">Connected</span>}
+                    {!connected && <span className="px-3 py-1 bg-red-500/20 text-red-400 rounded-full text-sm">Disconnected</span>}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6 space-y-3">
+                <h4 className="font-medium text-sm text-gray-300">Available Wallets</h4>
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { type: 'dapper', name: 'Dapper', icon: '🦆', desc: 'Popular Flow wallet' },
+                    { type: 'blocto', name: 'Blocto', icon: '🔵', desc: 'Multi-chain wallet' },
+                    { type: 'lilico', name: 'Lilico', icon: '🟣', desc: 'Flow native wallet' },
+                    { type: 'ledger', name: 'Ledger', icon: '🔐', desc: 'Hardware wallet' }
+                  ].map((wallet) => (
+                    <motion.button
+                      key={wallet.type}
+                      onClick={() => switchWallet(wallet.type)}
+                      disabled={walletType === wallet.type && connected}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className={`p-3 rounded-lg border text-left transition-all ${
+                        walletType === wallet.type && connected
+                          ? 'border-green-400 bg-green-400/10'
+                          : 'border-white/20 bg-black/30 hover:border-white/30'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        <span>{wallet.icon}</span>
+                        <span className="font-medium text-sm">{wallet.name}</span>
+                      </div>
+                      <p className="text-xs text-gray-400">{wallet.desc}</p>
+                    </motion.button>
+                  ))}
+                </div>
+              </div>
+
+              {connected && (
+                <motion.button
+                  onClick={disconnectWallet}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="mt-4 w-full bg-red-500/20 text-red-400 border border-red-500/30 px-6 py-3 rounded-lg font-medium hover:bg-red-500/30 transition-all"
+                >
+                  Disconnect Wallet
+                </motion.button>
+              )}
+            </div>
+          </motion.div>
+        );
+
+      case 'fiat':
+        return (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+          >
+            <FiatOnboarding />
+          </motion.div>
+        );
+
       case 'profile':
         return (
           <motion.div
@@ -177,36 +264,63 @@ export default function Settings() {
                   </select>
                 </div>
               </div>
-            </div>
+             </div>
+                     <div>
+                       <p className="font-medium capitalize">{walletType || 'Flow'} Wallet</p>
+                       <p className="text-sm text-gray-400">
+                         {connected && user?.addr ? `${user.addr.slice(0, 6)}...${user.addr.slice(-4)}` : 'Not connected'}
+                       </p>
+                     </div>
+                   </div>
+                   <div className="flex gap-2">
+                     {connected && <span className="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-sm">Connected</span>}
+                     {!connected && <span className="px-3 py-1 bg-red-500/20 text-red-400 rounded-full text-sm">Disconnected</span>}
+                   </div>
+                 </div>
+               </div>
 
-            <div className="bg-black/20 backdrop-blur-md border border-white/10 p-6 rounded-xl">
-              <h3 className="text-xl font-semibold mb-4 bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
-                Connected Wallets
-              </h3>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 bg-black/30 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full flex items-center justify-center">
-                      🔗
-                    </div>
-                    <div>
-                      <p className="font-medium">Flow Wallet</p>
-                      <p className="text-sm text-gray-400">{user?.addr ? `${user.addr.slice(0, 6)}...${user.addr.slice(-4)}` : 'Not connected'}</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <span className="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-sm">Primary</span>
-                  </div>
-                </div>
-              </div>
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="mt-4 bg-gradient-to-r from-green-500 to-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:from-green-600 hover:to-blue-700 transition-all"
-              >
-                Connect Additional Wallet
-              </motion.button>
-            </div>
+               <div className="mt-6 space-y-3">
+                 <h4 className="font-medium text-sm text-gray-300">Available Wallets</h4>
+                 <div className="grid grid-cols-2 gap-3">
+                   {[
+                     { type: 'dapper', name: 'Dapper', icon: '🦆', desc: 'Popular Flow wallet' },
+                     { type: 'blocto', name: 'Blocto', icon: '🔵', desc: 'Multi-chain wallet' },
+                     { type: 'lilico', name: 'Lilico', icon: '🟣', desc: 'Flow native wallet' },
+                     { type: 'ledger', name: 'Ledger', icon: '🔐', desc: 'Hardware wallet' }
+                   ].map((wallet) => (
+                     <motion.button
+                       key={wallet.type}
+                       onClick={() => switchWallet(wallet.type)}
+                       disabled={walletType === wallet.type && connected}
+                       whileHover={{ scale: 1.02 }}
+                       whileTap={{ scale: 0.98 }}
+                       className={`p-3 rounded-lg border text-left transition-all ${
+                         walletType === wallet.type && connected
+                           ? 'border-green-400 bg-green-400/10'
+                           : 'border-white/20 bg-black/30 hover:border-white/30'
+                       }`}
+                     >
+                       <div className="flex items-center gap-2 mb-1">
+                         <span>{wallet.icon}</span>
+                         <span className="font-medium text-sm">{wallet.name}</span>
+                       </div>
+                       <p className="text-xs text-gray-400">{wallet.desc}</p>
+                     </motion.button>
+                   ))}
+                 </div>
+               </div>
+
+               {connected && (
+                 <motion.button
+                   onClick={disconnectWallet}
+                   whileHover={{ scale: 1.02 }}
+                   whileTap={{ scale: 0.98 }}
+                   className="mt-4 w-full bg-red-500/20 text-red-400 border border-red-500/30 px-6 py-3 rounded-lg font-medium hover:bg-red-500/30 transition-all"
+                 >
+                   Disconnect Wallet
+                 </motion.button>
+               )}
+             </div>
           </motion.div>
         );
 
